@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visual Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <h1>Ask anything. Get a dashboard.</h1>
+      <p>Answers come back as cards, charts and timelines instead of walls of text.</p>
+    </header>
+
+    <form id="composer" class="composer" autocomplete="off">
+      <textarea id="prompt" rows="2" placeholder="Compare React and Vue, plan a weekend in Lisbon, explain how mortgages work..." aria-label="Your message"></textarea>
+      <button id="send" type="submit">Visualize</button>
+    </form>
+
+    <div class="chips" id="chips">
+      <button type="button" data-prompt="Compare React and Vue for a small team building a dashboard">React vs Vue</button>
+      <button type="button" data-prompt="Plan a relaxed 3-day trip to Lisbon">3 days in Lisbon</button>
+      <button type="button" data-prompt="Explain how a mortgage works for a first-time buyer">How mortgages work</button>
+      <button type="button" data-prompt="Build a healthy morning routine dashboard">Morning routine</button>
+    </div>
+
+    <section id="feed" class="feed" aria-live="polite"></section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

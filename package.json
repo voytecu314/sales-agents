@@ -1,0 +1,18 @@
+{
+  "name": "nara-html-chat",
+  "version": "1.0.0",
+  "description": "Local chat that answers with visual HTML instead of text, via NaraRouter",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@cerebras/cerebras_cloud_sdk": "^1.64.1",
+    "@openrouter/sdk": "^0.12.30",
+    "groq-sdk": "^1.1.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
