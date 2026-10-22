@@ -1,35 +1,47 @@
 <!doctype html>
-<html lang="en">
+<html lang="pl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Visual Chat</title>
+  <title>Nexora AI | Asystent sprzedaży</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="chat.css">
 </head>
 <body>
   <main class="shell">
     <header class="top">
-      <h1>Ask anything. Get a dashboard.</h1>
-      <p>Answers come back as cards, charts and timelines instead of walls of text.</p>
+      <div>
+        <h1>Nexora AI</h1>
+        <p>Asystent sprzedaży</p>
+      </div>
+      <button id="reset" type="button" class="ghost">Nowa rozmowa</button>
     </header>
 
-    <form id="composer" class="composer" autocomplete="off">
-      <textarea id="prompt" rows="2" placeholder="Compare React and Vue, plan a weekend in Lisbon, explain how mortgages work..." aria-label="Your message"></textarea>
-      <button id="send" type="submit">Visualize</button>
-    </form>
-
-    <div class="chips" id="chips">
-      <button type="button" data-prompt="Compare React and Vue for a small team building a dashboard">React vs Vue</button>
-      <button type="button" data-prompt="Plan a relaxed 3-day trip to Lisbon">3 days in Lisbon</button>
-      <button type="button" data-prompt="Explain how a mortgage works for a first-time buyer">How mortgages work</button>
-      <button type="button" data-prompt="Build a healthy morning routine dashboard">Morning routine</button>
-    </div>
-
     <section id="feed" class="feed" aria-live="polite"></section>
+
+    <form id="composer" class="composer" autocomplete="off">
+      <textarea id="prompt" rows="1" placeholder="Zadaj pytanie o ofertę, cennik lub wdrożenie..." aria-label="Twoja wiadomość"></textarea>
+      <button id="send" type="submit">Wyślij</button>
+    </form>
   </main>
+
+  <!-- Welcome message: edit freely. Buttons with data-send send that text as the customer's message. -->
+  <template id="welcome-tpl">
+    <article class="turn">
+      <div class="gen">
+        <div class="bubble"><p>Cześć! Jestem asystentem AI firmy Nexora. Pomogę Ci sprawdzić, czy i jak automatyzacja obsługi klienta może pasować do Twojej firmy. W czym mogę pomóc?</p></div>
+        <div class="quick-row">
+          <button type="button" class="quick" data-send="Ile kosztują Wasze pakiety?">Ile to kosztuje?</button>
+          <button type="button" class="quick" data-send="Co dokładnie potrafi Wasz asystent AI?">Co potrafi asystent?</button>
+          <button type="button" class="quick" data-send="Chcę sprawdzić, który pakiet będzie dla mnie odpowiedni.">Dobierz mi pakiet</button>
+        </div>
+      </div>
+    </article>
+  </template>
+
   <script src="app.js"></script>
 </body>
 </html>
