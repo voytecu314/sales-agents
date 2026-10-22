@@ -5,7 +5,11 @@ const button = document.getElementById('send');
 
 const REVEAL = '.hero, .bubble, .card, .price-card, .stat, .callout, .step, .progress, .donut, .quote, .table-wrap, details, svg.chart, form.ask, .quick-row, .row';
 
-let sessionId = crypto.randomUUID(); // a reload starts a fresh conversation (server memory is per session)
+// The browser owns the conversation: it keeps the history and sends it with every request.
+// The server keeps nothing. Assistant turns are stored as the compact text the server returns.
+const MAX_HISTORY = 20;
+let history = [];   // [{ role: 'user' | 'assistant', content: string }]
+let epoch = 0;      // bumped on reset, so a reply that arrives after "new conversation" is not stored
 let busy = false;
 
 showWelcome();
@@ -27,8 +31,8 @@ input.addEventListener('input', autosize);
 function autosize() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 180) + 'px'; }
 
 document.getElementById('reset').addEventListener('click', () => {
-  fetch('/api/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId }) }).catch(() => {});
-  sessionId = crypto.randomUUID();
+  history = [];
+  epoch++;
   feed.innerHTML = '';
   showWelcome();
 });
@@ -85,15 +89,22 @@ async function send(prompt, onFail) {
   feed.append(turn);
   turn.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const gen = turn.querySelector('.gen');
+  const myEpoch = epoch;
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, sessionId })
+      body: JSON.stringify({ messages: [...history.slice(-MAX_HISTORY), { role: 'user', content: prompt }] })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+
+    // remember the exchange only after it succeeded, so a failed request leaves the history untouched
+    if (myEpoch === epoch) {
+      history.push({ role: 'user', content: prompt }, { role: 'assistant', content: data.text || '(visual reply)' });
+      history = history.slice(-MAX_HISTORY);
+    }
 
     gen.innerHTML = data.html; // AI-generated HTML goes in here
     enhance(gen);
