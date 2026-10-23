@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="%%LANG%%">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>%%TITLE%%</title>
+  <meta name="description" content="%%DESCRIPTION%%">
+  <meta name="theme-color" content="%%BG%%">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="%%TITLE%%">
+  <meta property="og:description" content="%%DESCRIPTION%%">
+  <meta property="og:url" content="%%OG_URL%%">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/chat.css">
+  <style>%%THEME_CSS%%</style>
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div>
+        <h1><span id="emoji">%%EMOJI%%</span> <span id="brand-name">%%NAME%%</span></h1>
+        <p id="tagline">%%TAGLINE%%</p>
+      </div>
+      <div class="actions">
+        <select id="lang" class="lang" aria-label="%%LANG_LABEL%%">
+          <option value="de">Deutsch</option>
+          <option value="en">English</option>
+          <option value="pl">Polski</option>
+        </select>
+        <button id="reset" type="button" class="ghost">%%NEW_CHAT%%</button>
+      </div>
+    </header>
+
+    <section id="feed" class="feed" aria-live="polite"></section>
+
+    <form id="composer" class="composer" autocomplete="off">
+      <textarea id="prompt" rows="1" placeholder="%%PLACEHOLDER%%" aria-label="%%COMPOSER_LABEL%%"></textarea>
+      <button id="send" type="submit">%%SEND%%</button>
+    </form>
+  </main>
+
+  <!-- public config of this agent: branding and texts only, never the system prompt -->
+  <script type="application/json" id="agent-config">%%CONFIG_JSON%%</script>
+  <script src="/app.js"></script>
+</body>
+</html>

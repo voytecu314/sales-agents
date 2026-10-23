@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create your AI sales agent</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/chat.css">
+  <link rel="stylesheet" href="/create.css">
+</head>
+<body>
+  <main class="shell create">
+    <header class="top">
+      <div>
+        <h1 data-i18n="title">Create your AI sales agent</h1>
+        <p data-i18n="subtitle">Describe your company. You get a sales agent on its own link.</p>
+      </div>
+      <select id="ui-lang" class="lang" aria-label="Language">
+        <option value="de">Deutsch</option><option value="en">English</option><option value="pl">Polski</option>
+      </select>
+    </header>
+
+    <div id="error" class="callout danger" role="alert" hidden></div>
+
+    <!-- step 1: describe the company -->
+    <form id="step-describe" class="panel-form" autocomplete="off">
+      <label><span data-i18n="fName">Company name *</span><input name="name" type="text" maxlength="80" required></label>
+      <label><span data-i18n="fOffer">What do you sell? *</span><textarea name="offer" rows="3" maxlength="2000" required></textarea></label>
+      <label><span data-i18n="fPricing">Offer and prices</span><textarea name="pricing" rows="4" maxlength="3000"></textarea></label>
+      <label><span data-i18n="fAudience">Target audience</span><textarea name="audience" rows="2" maxlength="1000"></textarea></label>
+      <div class="two">
+        <label><span data-i18n="fTone">Tone of voice</span><input name="tone" type="text" maxlength="300" data-i18n-ph="phTone"></label>
+        <label><span data-i18n="fLanguage">Main language of your customers</span>
+          <select name="language"><option value="auto" data-i18n="auto">Detect automatically</option><option value="en">English</option><option value="de">Deutsch</option><option value="pl">Polski</option></select>
+        </label>
+      </div>
+      <label><span data-i18n="fColors">Brand colors</span><input name="brandColors" type="text" maxlength="200" data-i18n-ph="phColors"></label>
+      <label><span data-i18n="fFaqs">FAQs</span><textarea name="faqs" rows="4" maxlength="3000"></textarea></label>
+      <label><span data-i18n="fRules">Rules and limits (what the agent must never promise or say)</span><textarea name="rules" rows="3" maxlength="2000"></textarea></label>
+      <label><span data-i18n="fContact">Contact options</span><textarea name="contact" rows="2" maxlength="1000"></textarea></label>
+      <button class="btn" type="submit" id="generate" data-i18n="generate">Generate my agent</button>
+    </form>
+
+    <!-- step 2: review and edit -->
+    <form id="step-review" class="panel-form" hidden autocomplete="off">
+      <p class="hint" data-i18n="reviewHint">Review everything. You can change all texts, colors and the instructions of your agent.</p>
+      <div class="two">
+        <label><span data-i18n="rName">Display name</span><input id="r-name" type="text" maxlength="60" required></label>
+        <label><span data-i18n="rEmoji">Emoji</span><input id="r-emoji" type="text" maxlength="16"></label>
+      </div>
+      <fieldset class="colors">
+        <legend data-i18n="rColors">Colors</legend>
+        <label><input type="color" id="c-accent"><span>Accent</span></label>
+        <label><input type="color" id="c-accent2"><span>Accent 2</span></label>
+        <label><input type="color" id="c-accent3"><span>Accent 3</span></label>
+        <label><input type="color" id="c-bg"><span data-i18n="cBg">Background</span></label>
+        <label><input type="color" id="c-panel"><span data-i18n="cPanel">Panels</span></label>
+      </fieldset>
+      <fieldset class="locale">
+        <legend data-i18n="rTexts">Texts for visitors</legend>
+        <label><span data-i18n="rEditing">Language you are editing</span>
+          <select id="r-locale"><option value="de">Deutsch</option><option value="en">English</option><option value="pl">Polski</option></select>
+        </label>
+        <label><span data-i18n="rTagline">Tagline</span><input id="r-tagline" type="text" maxlength="100"></label>
+        <label><span data-i18n="rWelcome">Welcome message</span><textarea id="r-welcome" rows="3" maxlength="400"></textarea></label>
+        <div class="qr" id="r-qr"></div>
+      </fieldset>
+      <label><span data-i18n="rPrompt">Instructions of your agent (visitors never see this)</span><textarea id="r-prompt" rows="16" maxlength="12000"></textarea></label>
+      <div class="actions-row">
+        <button class="ghost" type="button" id="back" data-i18n="back">Back</button>
+        <button class="btn" type="submit" id="publish" data-i18n="publish">Publish my agent</button>
+      </div>
+    </form>
+
+    <!-- step 3: done -->
+    <section id="step-done" class="panel-form" hidden>
+      <h2 data-i18n="doneTitle">Your agent is live</h2>
+      <p><span data-i18n="doneLink">Public link</span>: <a id="d-url" href="#" rel="noopener"></a></p>
+      <p class="hint" data-i18n="doneKeyHint">This is your private owner key. It is shown only once and cannot be recovered. Save it now; you will need it to edit your agent.</p>
+      <input id="d-key" type="text" readonly>
+      <div class="actions-row">
+        <button class="ghost" type="button" id="copy-url" data-i18n="copyUrl">Copy link</button>
+        <button class="ghost" type="button" id="copy-key" data-i18n="copyKey">Copy key</button>
+        <a class="btn" id="d-open" href="#" data-i18n="open">Open agent</a>
+      </div>
+    </section>
+  </main>
+  <script src="/create.js"></script>
+</body>
+</html>

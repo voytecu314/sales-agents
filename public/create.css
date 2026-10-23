@@ -1,0 +1,28 @@
+/* Onboarding page. Loaded after style.css and chat.css. */
+.create .top h1 { font-size: 1.7rem; }
+.panel-form { display: grid; gap: 16px; padding: 22px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); margin-top: 18px; }
+.panel-form[hidden], #error[hidden] { display: none; }
+.panel-form label { display: grid; gap: 6px; font-size: .9rem; color: var(--muted); }
+.panel-form input[type=text], .panel-form textarea, .panel-form select {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px;
+  background: rgba(255,255,255,.05); color: var(--text); font: inherit;
+}
+.panel-form textarea { resize: vertical; }
+.panel-form select option { color: #111; }
+.panel-form input:focus, .panel-form textarea:focus, .panel-form select:focus {
+  outline: 0; border-color: var(--violet); box-shadow: 0 0 0 3px color-mix(in srgb, var(--violet) 25%, transparent);
+}
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
+fieldset { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin: 0; display: grid; gap: 12px; }
+legend { padding: 0 8px; font-weight: 600; color: var(--text); }
+.colors { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.colors label { display: flex; align-items: center; gap: 10px; }
+.colors input[type=color] { width: 44px; height: 36px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: none; cursor: pointer; }
+.qr { display: grid; gap: 10px; }
+.qr .two { gap: 10px; }
+.hint { margin: 0; color: var(--muted); font-size: .9rem; }
+.actions-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+a.btn { text-decoration: none; display: inline-block; }
+#d-key { font-family: ui-monospace, Menlo, Consolas, monospace; }
+#error { margin-top: 16px; }

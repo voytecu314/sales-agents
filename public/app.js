@@ -12,7 +12,55 @@ let history = [];   // [{ role: 'user' | 'assistant', content: string }]
 let epoch = 0;      // bumped on reset, so a reply that arrives after "new conversation" is not stored
 let busy = false;
 
-showWelcome();
+/* ---------- agent mode ----------
+ * On /a/:slug the server embeds the agent's public config (name, colors, texts per language).
+ * Without it (the demo page at /) everything behaves as before. */
+const LANGS = ['en', 'de', 'pl'];
+const cfgEl = document.getElementById('agent-config');
+const AGENT = cfgEl ? JSON.parse(cfgEl.textContent) : null;
+const CHAT_URL = AGENT ? `/api/agents/${encodeURIComponent(AGENT.slug)}/chat` : '/api/chat';
+let lang = AGENT ? pickLang() : null;
+
+// Language: ?lang=de  >  the visitor's earlier choice  >  browser language  >  English
+function pickLang() {
+  const q = new URLSearchParams(location.search).get('lang');
+  if (LANGS.includes(q)) return q;
+  try { const saved = localStorage.getItem('sa_lang'); if (LANGS.includes(saved)) return saved; } catch { /* storage blocked */ }
+  for (const l of navigator.languages || [navigator.language]) {
+    const code = String(l || '').slice(0, 2).toLowerCase();
+    if (LANGS.includes(code)) return code;
+  }
+  return 'en';
+}
+
+const t = (key) => (AGENT ? (AGENT.strings[lang]?.[key] ?? AGENT.strings.en[key]) : 'Coś poszło nie tak.');
+
+function applyLang() {
+  const loc = AGENT.locales[lang] || AGENT.locales.en;
+  document.documentElement.lang = lang;
+  document.title = loc.tagline ? `${AGENT.name} | ${loc.tagline}` : AGENT.name;
+  document.getElementById('tagline').textContent = loc.tagline;
+  input.placeholder = t('placeholder');
+  input.setAttribute('aria-label', t('composerLabel'));
+  button.textContent = t('send');
+  document.getElementById('reset').textContent = t('newChat');
+  document.getElementById('lang').setAttribute('aria-label', t('langLabel'));
+  document.getElementById('lang').value = lang;
+  // swap the welcome message only while the conversation has not started
+  if (!history.length && !feed.querySelector('.you')) { feed.innerHTML = ''; showWelcome(); }
+}
+
+if (AGENT) {
+  document.getElementById('lang').addEventListener('change', (e) => {
+    if (!LANGS.includes(e.target.value)) return;
+    lang = e.target.value;
+    try { localStorage.setItem('sa_lang', lang); } catch { /* storage blocked */ }
+    applyLang();
+  });
+  applyLang(); // also renders the welcome message
+} else {
+  showWelcome();
+}
 
 /* ---------- composer ---------- */
 composer.addEventListener('submit', (e) => {
@@ -92,10 +140,10 @@ async function send(prompt, onFail) {
   const myEpoch = epoch;
 
   try {
-    const res = await fetch('/api/chat', {
+    const res = await fetch(CHAT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [...history.slice(-MAX_HISTORY), { role: 'user', content: prompt }] })
+      body: JSON.stringify({ messages: [...history.slice(-MAX_HISTORY), { role: 'user', content: prompt }], lang: lang || undefined })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
@@ -112,8 +160,9 @@ async function send(prompt, onFail) {
     gen.innerHTML = '';
     const box = document.createElement('div');
     box.className = 'callout danger';
-    box.innerHTML = '<strong>Coś poszło nie tak.</strong> ';
-    box.append(err.message);
+    const strong = document.createElement('strong');
+    strong.textContent = t('error');
+    box.append(strong, ' ', err.message);
     gen.append(box);
     enhance(gen);
     onFail?.();
@@ -125,8 +174,40 @@ async function send(prompt, onFail) {
 }
 
 function showWelcome() {
+  if (AGENT) return showAgentWelcome();
   const node = document.getElementById('welcome-tpl').content.cloneNode(true);
   feed.append(node);
+  enhance(feed);
+}
+
+// Welcome bubble + quick replies of the agent. Built with textContent: owner text is never parsed as HTML.
+function showAgentWelcome() {
+  const loc = AGENT.locales[lang] || AGENT.locales.en;
+  const turn = document.createElement('article');
+  turn.className = 'turn';
+  const gen = document.createElement('div');
+  gen.className = 'gen';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  const p = document.createElement('p');
+  p.textContent = loc.welcome;
+  bubble.append(p);
+  gen.append(bubble);
+
+  const row = document.createElement('div');
+  row.className = 'quick-row';
+  for (const q of loc.quickReplies) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'quick';
+    b.dataset.send = q.send;
+    b.textContent = q.label;
+    row.append(b);
+  }
+  gen.append(row);
+  turn.append(gen);
+  feed.append(turn);
   enhance(feed);
 }
 

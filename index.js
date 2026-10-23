@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const chatRoutes = require('./routes/chat');
+const agentRoutes = require('./routes/agents');
+const pageRoutes = require('./routes/pages');
 
 const PORT = process.env.PORT || 3000;
 
@@ -11,7 +13,9 @@ app.use(express.json({ limit: '100kb' }));
 // Locally this serves /public. On Vercel the public/ folder is served by the CDN and this line is ignored.
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api', chatRoutes);
+app.use('/api', chatRoutes);   // demo chat (prompts/company.txt)
+app.use('/api', agentRoutes);  // multi-tenant agents
+app.use(pageRoutes);           // /create and /a/:slug
 
 // bad JSON etc. -> JSON error instead of an HTML stack trace
 app.use((err, req, res, next) => {

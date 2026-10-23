@@ -12,8 +12,8 @@
 body {
   margin: 0; min-height: 100vh; color: var(--text); font: 400 1rem/1.6 var(--body);
   background:
-    radial-gradient(900px 500px at 8% -8%, rgba(139,92,246,.28), transparent 60%),
-    radial-gradient(700px 480px at 100% 0, rgba(255,122,89,.16), transparent 60%),
+    radial-gradient(900px 500px at 8% -8%, color-mix(in srgb, var(--violet) 28%, transparent), transparent 60%),
+    radial-gradient(700px 480px at 100% 0, color-mix(in srgb, var(--coral) 16%, transparent), transparent 60%),
     var(--bg);
 }
 
@@ -26,7 +26,7 @@ body {
   display: flex; gap: 12px; align-items: flex-end; padding: 10px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 22px;
 }
-.composer:focus-within { border-color: var(--violet); box-shadow: 0 0 0 4px rgba(139,92,246,.2); }
+.composer:focus-within { border-color: var(--violet); box-shadow: 0 0 0 4px color-mix(in srgb, var(--violet) 20%, transparent); }
 .composer textarea {
   flex: 1; resize: vertical; min-height: 52px; max-height: 220px; padding: 12px 14px;
   background: transparent; border: 0; outline: 0; color: var(--text); font: inherit;
@@ -61,11 +61,11 @@ body {
 
 .hero {
   position: relative; overflow: hidden; display: grid; gap: 6px; padding: 30px 28px; border-radius: 24px;
-  background: linear-gradient(135deg, rgba(139,92,246,.42), rgba(255,122,89,.2)); border: 1px solid var(--line);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--violet) 42%, transparent), color-mix(in srgb, var(--coral) 20%, transparent)); border: 1px solid var(--line);
 }
 .hero::after {
   content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(94,234,212,.35), transparent 65%); animation: drift 9s ease-in-out infinite alternate;
+  background: radial-gradient(circle, color-mix(in srgb, var(--mint) 35%, transparent), transparent 65%); animation: drift 9s ease-in-out infinite alternate;
 }
 .hero h2 { font-size: clamp(1.7rem, 4.5vw, 2.5rem); font-weight: 800; }
 .hero p { color: #ddd6ff; max-width: 56ch; position: relative; z-index: 1; }
@@ -97,9 +97,9 @@ body {
 .row { display: flex; flex-wrap: wrap; gap: 8px; }
 .badge {
   display: inline-block; padding: 3px 11px; border-radius: 99px; font-size: .8rem; font-weight: 600;
-  background: rgba(139,92,246,.22); color: #d9ccff;
+  background: color-mix(in srgb, var(--violet) 22%, transparent); color: #d9ccff;
 }
-.badge.good { background: rgba(94,234,212,.18); color: var(--mint); }
+.badge.good { background: color-mix(in srgb, var(--mint) 18%, transparent); color: var(--mint); }
 .badge.warn { background: rgba(251,191,36,.18); color: var(--amber); }
 .badge.bad { background: rgba(251,113,133,.18); color: var(--rose); }
 
@@ -165,7 +165,7 @@ svg.chart { width: 100%; height: auto; color: var(--muted); }
 
 @keyframes shimmer { to { background-position: -300% 0; } }
 @keyframes drift { to { transform: translate(-40px, 30px) scale(1.2); } }
-@keyframes pulse { 50% { box-shadow: 0 0 0 10px rgba(94,234,212,0); background: rgba(94,234,212,.22); } }
+@keyframes pulse { 50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--mint) 0%, transparent); background: color-mix(in srgb, var(--mint) 22%, transparent); } }
 @keyframes float { 50% { transform: translateY(-5px); } }
 @keyframes fadein { from { opacity: 0; transform: translateY(-4px); } }
 
