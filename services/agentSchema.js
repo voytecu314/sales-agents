@@ -7,6 +7,7 @@ const DEFAULT_PALETTE = { accent: '#8b5cf6', accent2: '#ff7a59', accent3: '#5eea
 const TEXT_COLOR = '#f1edff';   // fixed light text of the theme
 const DARK_TEXT = '#140c2b';    // text on gradient buttons
 const HEX_RE = /^#[0-9a-f]{6}$/i;
+const EMAIL_RE = /^[^\s@<>"']{1,64}@[^\s@<>"']{1,200}\.[^\s@<>"']{2,}$/;
 
 const LIMITS = { name: 60, tagline: 100, welcome: 400, label: 40, send: 200, prompt: 12000, promptMin: 200 };
 
@@ -74,8 +75,15 @@ function validateAgent(input, { repair = false } = {}) {
     language: LANGS.includes(src.language) ? src.language : 'en',
     palette: checkPalette(src.palette, repair, errors),
     locales: {},
+    notifyEmail: '',
     systemPrompt: text(src.systemPrompt, o('systemPrompt', LIMITS.prompt, { min: LIMITS.promptMin, multiline: true }))
   };
+
+  const email = typeof src.notifyEmail === 'string' ? src.notifyEmail.trim().toLowerCase() : '';
+  if (email) {
+    if (email.length <= 254 && EMAIL_RE.test(email)) value.notifyEmail = email;
+    else errors.push('notifyEmail is not a valid e-mail address');
+  }
 
   const emoji = typeof src.emoji === 'string' ? src.emoji.trim() : '';
   if (EMOJI_RE.test(emoji) && emoji.length <= 16) value.emoji = emoji;
@@ -112,4 +120,4 @@ function toPublicConfig(agent) {
   };
 }
 
-module.exports = { validateAgent, toPublicConfig, DEFAULT_PALETTE, contrast, HEX_RE };
+module.exports = { validateAgent, toPublicConfig, DEFAULT_PALETTE, contrast, HEX_RE, EMAIL_RE };

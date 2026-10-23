@@ -26,3 +26,8 @@ legend { padding: 0 8px; font-weight: 600; color: var(--text); }
 a.btn { text-decoration: none; display: inline-block; }
 #d-key { font-family: ui-monospace, Menlo, Consolas, monospace; }
 #error { margin-top: 16px; }
+
+a.ghost { display: inline-block; text-decoration: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: 12px; color: var(--text); }
+.lead-item { padding: 12px 0; border-top: 1px solid var(--line); display: grid; gap: 4px; }
+.lead-item p { margin: 0; color: var(--muted); white-space: pre-wrap; }
+.lead-item small { color: var(--muted); }

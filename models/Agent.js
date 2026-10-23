@@ -22,6 +22,8 @@ const agentSchema = new mongoose.Schema({
   },
   locales: { en: locale, de: locale, pl: locale },
   systemPrompt: { type: String, required: true, maxlength: 12000 },
+  notifyEmail: { type: String, default: '', maxlength: 254 },       // where lead notifications go (never public)
+  notifyEmailVerified: { type: Boolean, default: false },
   status: { type: String, enum: ['active', 'paused'], default: 'active' },
   plan: { type: String, default: 'free' },                  // filled by Stripe later
   editTokenHash: { type: String, required: true, select: false } // sha256 of the owner's secret key

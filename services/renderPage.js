@@ -41,6 +41,8 @@ function renderAgentPage(agent, { lang = 'en', baseUrl = '' } = {}) {
     SEND: esc(t.send),
     NEW_CHAT: esc(t.newChat),
     LANG_LABEL: esc(t.langLabel),
+    AI_LABEL: esc(t.aiLabel),
+    REPORT: esc(t.report),
     CONFIG_JSON: jsonForScript({ ...config, strings: STRINGS, defaultLang: lang })
   };
   return TEMPLATE.replace(/%%([A-Z_]+)%%/g, (m, k) => (k in values ? values[k] : m));

@@ -2,6 +2,7 @@
 const { REMINDER } = require('../prompts/uiRules');
 const { askChain } = require('./llm');
 const cleanHtml = require('../utils/cleanHtml');
+const sanitizeHtml = require('../utils/sanitizeHtml');
 const htmlToText = require('../utils/htmlToText');
 
 // Assistant turns come back from the client as compact text; wrap them so the model knows what they were.
@@ -18,10 +19,10 @@ function buildLlmMessages(systemPrompt, validated) {
   ];
 }
 
-async function respond(res, messages) {
+async function respond(res, messages, { linkPolicy = null } = {}) {
   try {
     const raw = await askChain(messages);
-    const html = cleanHtml(raw);
+    const html = sanitizeHtml(cleanHtml(raw), { linkPolicy }); // cleanHtml tidies the format, the sanitizer makes it safe
     if (!html) return res.status(502).json({ error: 'The model returned an empty response. Try again.' });
     // `text` is what the client sends back as the assistant side of the history
     res.json({ html, text: htmlToText(html) || '(visual reply)' });

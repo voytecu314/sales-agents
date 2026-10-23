@@ -1,18 +1,33 @@
 const express = require('express');
 const rateLimit = require('../utils/rateLimit');
 const { withDb } = require('../middleware/withDb');
+const { dbLimit, killSwitch } = require('../middleware/limits');
+const { requireOwner } = require('../middleware/requireOwner');
 const { generate, create, config, chat } = require('../controllers/agentsController');
+const { owner, update, remove, verifyEmail } = require('../controllers/ownerController');
+const { lead, report } = require('../controllers/leadController');
 
 const router = express.Router();
-
 const num = (v, d) => Number(v) || d;
-const generateLimit = rateLimit({ windowMs: num(process.env.GENERATE_LIMIT_WINDOW_MS, 600_000), max: num(process.env.GENERATE_LIMIT_MAX, 5) });
-const createLimit = rateLimit({ windowMs: 3_600_000, max: num(process.env.CREATE_LIMIT_MAX, 10) });
-const chatLimit = rateLimit({ windowMs: num(process.env.RATE_LIMIT_WINDOW_MS, 60_000), max: num(process.env.RATE_LIMIT_MAX, 20) });
+const MIN = 60_000, HOUR = 3_600_000;
 
-router.post('/agents/generate', generateLimit, generate);          // no database needed
-router.post('/agents', createLimit, withDb, create);
+// cheap in-memory limits first (per instance), the expensive ones live in MongoDB (shared by all instances)
+const chatPerIp = rateLimit({ windowMs: num(process.env.RATE_LIMIT_WINDOW_MS, MIN), max: num(process.env.RATE_LIMIT_MAX, 20) });
+const chatPerAgent = rateLimit({ windowMs: MIN, max: num(process.env.AGENT_RATE_LIMIT_MAX, 60), key: (req) => `agent:${req.params.slug}` });
+
+router.post('/agents/generate', withDb, killSwitch(), dbLimit({ name: 'generate', windowMs: 10 * MIN, max: num(process.env.GENERATE_LIMIT_MAX, 5) }), generate);
+router.post('/agents', withDb, dbLimit({ name: 'create', windowMs: HOUR, max: num(process.env.CREATE_LIMIT_MAX, 10) }), create);
+
 router.get('/agents/:slug/config', withDb, config);
-router.post('/agents/:slug/chat', chatLimit, withDb, chat);
+router.post('/agents/:slug/chat', chatPerIp, chatPerAgent, withDb, killSwitch(), chat);
+router.post('/agents/:slug/lead', withDb, dbLimit({ name: 'lead', windowMs: HOUR, max: 5 }), lead);
+router.post('/agents/:slug/report', withDb, dbLimit({ name: 'report', windowMs: HOUR, max: 3 }), report);
+router.get('/agents/:slug/verify-email', withDb, dbLimit({ name: 'verify', windowMs: HOUR, max: 20 }), verifyEmail);
+
+// owner (key in the Authorization header)
+const ownerAuth = [withDb, dbLimit({ name: 'owner', windowMs: 10 * MIN, max: 40 }), requireOwner];
+router.get('/agents/:slug/owner', ...ownerAuth, owner);
+router.put('/agents/:slug', ...ownerAuth, update);
+router.delete('/agents/:slug', ...ownerAuth, remove);
 
 module.exports = router;

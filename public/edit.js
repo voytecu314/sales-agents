@@ -1,0 +1,103 @@
+// Owner page: /edit/:slug#<owner key>. The key is read from the URL fragment (never sent to the server
+// in the address), moved to sessionStorage for this tab, and sent as a Bearer header.
+const { t, $, fill, collect, applyUi, request, showError, showNotice, onUiChange } = window.AgentForm;
+
+const slug = location.pathname.split('/')[2] || '';
+const STORE_KEY = 'sa_owner_' + slug;
+let token = '';
+let data = null;
+
+try {
+  const fromUrl = decodeURIComponent(location.hash.slice(1));
+  if (fromUrl) { sessionStorage.setItem(STORE_KEY, fromUrl); history.replaceState(null, '', location.pathname); }
+  token = sessionStorage.getItem(STORE_KEY) || '';
+} catch { token = decodeURIComponent(location.hash.slice(1)); }
+
+const auth = () => ({ Authorization: 'Bearer ' + token });
+const api = (method, body) => request(method, `/api/agents/${encodeURIComponent(slug)}` + (method === 'GET' ? '/owner' : ''), body, auth());
+
+function renderMeta() {
+  if (!data) return;
+  $('e-usage').textContent = t('usage').replace('{n}', data.usage.today).replace('{cap}', data.usage.cap);
+  const a = data.agent;
+  $('e-verify').textContent = !a.notifyEmail ? '' : a.notifyEmailVerified ? t('verifyOk') : t('verifyPending');
+  $('e-verify').hidden = !a.notifyEmail;
+}
+
+function renderLeads() {
+  const box = $('leads');
+  box.replaceChildren();
+  if (!data.leads.length) { const p = document.createElement('p'); p.className = 'hint'; p.textContent = t('noLeads'); box.append(p); return; }
+  for (const l of data.leads) { // textContent only: visitor input is never parsed as HTML
+    const card = document.createElement('div');
+    card.className = 'lead-item';
+    const head = document.createElement('strong');
+    head.textContent = `${l.name} · ${l.email}`;
+    const when = document.createElement('small');
+    when.textContent = new Date(l.createdAt).toLocaleString();
+    const msg = document.createElement('p');
+    msg.textContent = l.message || '';
+    card.append(head, when, msg);
+    box.append(card);
+  }
+}
+
+async function load() {
+  showError('');
+  try {
+    data = await api('GET');
+    fill(data.agent);
+    $('e-status').value = data.agent.status;
+    $('e-url').textContent = data.url;
+    $('e-url').href = data.url;
+    $('key-form').hidden = true;
+    $('edit-form').hidden = false;
+    $('leads-box').hidden = false;
+    renderMeta();
+    renderLeads();
+  } catch (err) {
+    $('edit-form').hidden = true;
+    $('leads-box').hidden = true;
+    $('key-form').hidden = false;
+    try { sessionStorage.removeItem(STORE_KEY); } catch { /* storage blocked */ }
+    showError(err.status === 401 ? t('authError') : err.message);
+  }
+}
+
+$('key-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  token = $('key-input').value.trim();
+  try { sessionStorage.setItem(STORE_KEY, token); } catch { /* storage blocked */ }
+  load();
+});
+
+$('edit-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  showError(''); showNotice('');
+  const btn = $('save');
+  btn.disabled = true; btn.textContent = t('saving');
+  try {
+    const agent = collect();
+    agent.status = $('e-status').value;
+    const out = await api('PUT', { agent });
+    await load();
+    showNotice(out.emailVerificationSent ? t('verifySent') : t('saved'));
+  } catch (err) {
+    showError(err.status === 401 ? t('authError') : err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = t('save');
+  }
+});
+
+$('delete').addEventListener('click', async () => {
+  if (!confirm(t('deleteConfirm'))) return;
+  try {
+    await api('DELETE');
+    try { sessionStorage.removeItem(STORE_KEY); } catch { /* storage blocked */ }
+    location.href = '/create';
+  } catch (err) { showError(err.message); }
+});
+
+onUiChange(renderMeta);
+applyUi();
+if (token) load(); else $('key-form').hidden = false;

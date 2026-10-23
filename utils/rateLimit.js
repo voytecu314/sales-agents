@@ -2,14 +2,14 @@
 // Best effort only: on Vercel every function instance has its own memory, so this
 // stops casual spam, not a determined attacker. Phase 3 adds per-agent limits and
 // a daily cap stored in the database.
-function rateLimit({ windowMs = 60_000, max = 20 } = {}) {
+function rateLimit({ windowMs = 60_000, max = 20, key: keyFn } = {}) {
   const hits = new Map(); // ip -> { count, resetAt }
 
   return (req, res, next) => {
     const now = Date.now();
     if (hits.size > 5000) for (const [k, v] of hits) if (v.resetAt <= now) hits.delete(k);
 
-    const key = req.ip || 'unknown';
+    const key = (keyFn ? keyFn(req) : req.ip) || 'unknown';
     let h = hits.get(key);
     if (!h || h.resetAt <= now) { h = { count: 0, resetAt: now + windowMs }; hits.set(key, h); }
 

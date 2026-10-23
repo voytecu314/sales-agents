@@ -4,11 +4,13 @@ const path = require('path');
 const chatRoutes = require('./routes/chat');
 const agentRoutes = require('./routes/agents');
 const pageRoutes = require('./routes/pages');
+const { securityHeaders } = require('./middleware/securityHeaders');
 
 const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.set('trust proxy', 1); // behind Vercel's proxy: req.ip is the real client IP
+app.use(securityHeaders);
 app.use(express.json({ limit: '100kb' }));
 // Locally this serves /public. On Vercel the public/ folder is served by the CDN and this line is ignored.
 app.use(express.static(path.join(__dirname, 'public')));

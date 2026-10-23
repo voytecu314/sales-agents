@@ -5,12 +5,20 @@ const { isValidSlug } = require('../services/slug');
 const { getAgent } = require('../services/agentCache');
 const { renderAgentPage, esc } = require('../services/renderPage');
 
-const CREATE_HTML = fs.readFileSync(path.join(__dirname, '..', 'views', 'create.html'), 'utf8');
+const view = (name) => fs.readFileSync(path.join(__dirname, '..', 'views', name), 'utf8');
+const REVIEW_FORM = view('review-form.html'); // the editable agent form, shared by /create and /edit
+const CREATE_HTML = view('create.html').replace('%%REVIEW_FORM%%', REVIEW_FORM);
+const EDIT_HTML = view('edit.html').replace('%%REVIEW_FORM%%', REVIEW_FORM);
 
 const baseUrl = (req) => (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
 
 function createPage(req, res) {
   res.type('html').send(CREATE_HTML);
+}
+
+// GET /edit/:slug : owner page. The owner key is in the URL fragment (#...), which is never sent to the server.
+function editPage(req, res) {
+  res.type('html').send(EDIT_HTML);
 }
 
 // GET /a/:slug : same shell for everyone, filled with this company's branding
@@ -33,4 +41,4 @@ async function agentPage(req, res) {
   res.type('html').send(renderAgentPage(agent, { lang, baseUrl: baseUrl(req) }));
 }
 
-module.exports = { createPage, agentPage };
+module.exports = { createPage, editPage, agentPage };

@@ -6,7 +6,7 @@ AI sales agents that answer with rich, interactive HTML (cards, price tables, fo
 
 ```bash
 npm install
-npm install mongoose   # once: agents are stored in MongoDB Atlas
+npm install mongoose nodemailer   # once: MongoDB Atlas storage, e-mail
 cp .env.example .env   # add at least one provider key
 npm run dev            # http://localhost:3000
 ```
@@ -34,3 +34,17 @@ npm run dev            # http://localhost:3000
 Zero config: `index.js` exports the Express app, `public/` is served by the CDN.
 Set the env vars from `.env.example` in the project settings.
 Provider fallbacks can take a while, so check the function max duration in the project settings.
+
+## Owner page, contact requests, safety (phase 3)
+
+- **Owner page:** `/edit/:slug#<owner key>`. The key is shown once after publishing and only its SHA-256 hash is stored.
+  The page edits everything, pauses or deletes the agent, and lists the last 50 contact requests.
+- **Contact requests:** the AI shows a contact form; the page sends it to `POST /api/agents/:slug/lead` itself, so
+  contact data never goes to the LLM providers. It is stored (deleted after 90 days) and e-mailed to the owner's
+  address once that address is confirmed through a link (`EMAIL_VERIFY_SECRET`).
+- **HTML safety:** every reply passes `utils/sanitizeHtml.js` (allowlist of tags, attributes and classes; output is rebuilt,
+  never passed through) and the page sends a strict Content-Security-Policy. Links survive only if their URL, e-mail
+  or phone number appears in the agent's own instructions.
+- **Limits:** per IP and per agent rate limits, a daily message cap per agent, shared counters in MongoDB,
+  a global kill switch (`KILL_SWITCH=true` or the `settings` document `{ key: "killSwitch", value: true }`).
+- **Moderation:** owner instructions are checked on publish and on every change (fixed patterns plus an LLM check).

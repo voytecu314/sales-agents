@@ -7,6 +7,12 @@ const { validateAgent, toPublicConfig } = require('../services/agentSchema');
 const { buildAgentPrompt } = require('../services/agentPrompt');
 const { buildLlmMessages, respond } = require('../services/chatFlow');
 const validateMessages = require('../utils/validateMessages');
+const { buildLinkPolicy } = require('../services/linkPolicy');
+const { moderate, textOf } = require('../services/moderation');
+const { sendVerification } = require('../services/mailer');
+const { hit, dailyKey } = require('../services/counters');
+
+const DAILY_CAP = () => Number(process.env.DAILY_MESSAGE_CAP) || 200; // messages per agent and day
 
 const baseUrl = (req) => (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
 
@@ -28,8 +34,15 @@ async function create(req, res) {
   if (errors.length) return res.status(400).json({ error: 'Please fix: ' + errors.slice(0, 5).join('; ') + '.' });
   try {
     // Phase 4: the payment check goes here (middleware on this route)
+    const verdict = await moderate(textOf(value));
+    if (!verdict.ok) return res.status(400).json({ error: `This agent cannot be published: ${verdict.reason}. Please change the instructions.` });
+
     const { slug, editToken } = await createAgent(value);
-    res.status(201).json({ slug, url: `${baseUrl(req)}/a/${slug}`, editToken });
+    const base = baseUrl(req);
+    if (value.notifyEmail) {
+      await sendVerification({ slug, name: value.name, notifyEmail: value.notifyEmail }, base).catch((e) => console.error('Verification mail failed:', e.message));
+    }
+    res.status(201).json({ slug, url: `${base}/a/${slug}`, editToken, editUrl: `${base}/edit/${slug}#${editToken}` });
   } catch (err) {
     console.error('Create failed:', err);
     res.status(500).json({ error: 'Could not save the agent. Please try again.' });
@@ -69,8 +82,17 @@ async function chat(req, res) {
   const parsed = validateMessages(req.body?.messages);
   if (parsed.error) return res.status(400).json({ error: parsed.error });
 
+  try { // daily cap per agent: the free LLM tiers are shared, so one busy agent must not use everything
+    if (await hit(dailyKey('cap', agent.slug), 2 * 86_400_000) > DAILY_CAP()) {
+      return res.status(429).json({ error: 'This assistant has reached its daily limit. Please try again tomorrow or contact the company directly.' });
+    }
+  } catch (err) {
+    console.error('Usage counter failed:', err.message);
+    return res.status(503).json({ error: 'Service temporarily unavailable.' });
+  }
+
   const lang = LANGS.includes(req.body?.lang) ? req.body.lang : null;
-  await respond(res, buildLlmMessages(buildAgentPrompt(agent, lang), parsed.messages));
+  await respond(res, buildLlmMessages(buildAgentPrompt(agent, lang), parsed.messages), { linkPolicy: buildLinkPolicy(agent.systemPrompt) });
 }
 
-module.exports = { generate, create, config, chat };
+module.exports = { generate, create, config, chat, loadAgent, baseUrl, DAILY_CAP };

@@ -47,29 +47,7 @@
 
     <!-- step 2: review and edit -->
     <form id="step-review" class="panel-form" hidden autocomplete="off">
-      <p class="hint" data-i18n="reviewHint">Review everything. You can change all texts, colors and the instructions of your agent.</p>
-      <div class="two">
-        <label><span data-i18n="rName">Display name</span><input id="r-name" type="text" maxlength="60" required></label>
-        <label><span data-i18n="rEmoji">Emoji</span><input id="r-emoji" type="text" maxlength="16"></label>
-      </div>
-      <fieldset class="colors">
-        <legend data-i18n="rColors">Colors</legend>
-        <label><input type="color" id="c-accent"><span>Accent</span></label>
-        <label><input type="color" id="c-accent2"><span>Accent 2</span></label>
-        <label><input type="color" id="c-accent3"><span>Accent 3</span></label>
-        <label><input type="color" id="c-bg"><span data-i18n="cBg">Background</span></label>
-        <label><input type="color" id="c-panel"><span data-i18n="cPanel">Panels</span></label>
-      </fieldset>
-      <fieldset class="locale">
-        <legend data-i18n="rTexts">Texts for visitors</legend>
-        <label><span data-i18n="rEditing">Language you are editing</span>
-          <select id="r-locale"><option value="de">Deutsch</option><option value="en">English</option><option value="pl">Polski</option></select>
-        </label>
-        <label><span data-i18n="rTagline">Tagline</span><input id="r-tagline" type="text" maxlength="100"></label>
-        <label><span data-i18n="rWelcome">Welcome message</span><textarea id="r-welcome" rows="3" maxlength="400"></textarea></label>
-        <div class="qr" id="r-qr"></div>
-      </fieldset>
-      <label><span data-i18n="rPrompt">Instructions of your agent (visitors never see this)</span><textarea id="r-prompt" rows="16" maxlength="12000"></textarea></label>
+            %%REVIEW_FORM%%
       <div class="actions-row">
         <button class="ghost" type="button" id="back" data-i18n="back">Back</button>
         <button class="btn" type="submit" id="publish" data-i18n="publish">Publish my agent</button>
@@ -85,10 +63,13 @@
       <div class="actions-row">
         <button class="ghost" type="button" id="copy-url" data-i18n="copyUrl">Copy link</button>
         <button class="ghost" type="button" id="copy-key" data-i18n="copyKey">Copy key</button>
+        <button class="ghost" type="button" id="copy-edit" data-i18n="copyEdit">Copy edit link</button>
+        <a class="ghost" id="d-edit" href="#" data-i18n="editLink">Edit page</a>
         <a class="btn" id="d-open" href="#" data-i18n="open">Open agent</a>
       </div>
     </section>
   </main>
+  <script src="/agent-form.js"></script>
   <script src="/create.js"></script>
 </body>
 </html>

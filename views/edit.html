@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit your AI sales agent</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/chat.css">
+  <link rel="stylesheet" href="/create.css">
+</head>
+<body>
+  <main class="shell create">
+    <header class="top">
+      <div>
+        <h1 data-i18n="editTitle">Edit your AI sales agent</h1>
+        <p><a id="e-url" href="#" rel="noopener"></a></p>
+      </div>
+      <select id="ui-lang" class="lang" aria-label="Language">
+        <option value="de">Deutsch</option><option value="en">English</option><option value="pl">Polski</option>
+      </select>
+    </header>
+
+    <div id="error" class="callout danger" role="alert" hidden></div>
+    <div id="notice" class="callout success" role="status" hidden></div>
+
+    <!-- no owner key in the address: ask for it -->
+    <form id="key-form" class="panel-form" hidden autocomplete="off">
+      <label><span data-i18n="keyLabel">Owner key</span><input id="key-input" type="text" autocomplete="off" required></label>
+      <button class="btn" type="submit" data-i18n="keyGo">Open</button>
+    </form>
+
+    <form id="edit-form" class="panel-form" hidden autocomplete="off">
+      <div class="two">
+        <label><span data-i18n="eStatus">Status</span>
+          <select id="e-status"><option value="active" data-i18n="sActive">Online</option><option value="paused" data-i18n="sPaused">Paused (visitors see "unavailable")</option></select>
+        </label>
+        <p class="hint" id="e-usage"></p>
+      </div>
+      %%REVIEW_FORM%%
+      <p class="hint" id="e-verify"></p>
+      <div class="actions-row">
+        <button class="btn" type="submit" id="save" data-i18n="save">Save changes</button>
+        <button class="ghost" type="button" id="delete" data-i18n="delete">Delete agent</button>
+      </div>
+    </form>
+
+    <section id="leads-box" class="panel-form" hidden>
+      <h2 data-i18n="leadsTitle">Contact requests</h2>
+      <p class="hint" data-i18n="leadsHint">The last 50 requests. They are deleted automatically after 90 days.</p>
+      <div id="leads"></div>
+    </section>
+  </main>
+  <script src="/agent-form.js"></script>
+  <script src="/edit.js"></script>
+</body>
+</html>

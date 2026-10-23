@@ -1,0 +1,25 @@
+<p class="hint" data-i18n="reviewHint">Review everything. You can change all texts, colors and the instructions of your agent.</p>
+      <div class="two">
+        <label><span data-i18n="rName">Display name</span><input id="r-name" type="text" maxlength="60" required></label>
+        <label><span data-i18n="rEmoji">Emoji</span><input id="r-emoji" type="text" maxlength="16"></label>
+      </div>
+      <label><span data-i18n="rNotify">E-mail for contact requests (optional)</span><input id="r-notify" type="email" maxlength="254" autocomplete="off"></label>
+      <p class="hint" id="r-notify-hint" data-i18n="rNotifyHint">Visitors can ask your team to contact them. We first send a confirmation link to this address.</p>
+      <fieldset class="colors">
+        <legend data-i18n="rColors">Colors</legend>
+        <label><input type="color" id="c-accent"><span>Accent</span></label>
+        <label><input type="color" id="c-accent2"><span>Accent 2</span></label>
+        <label><input type="color" id="c-accent3"><span>Accent 3</span></label>
+        <label><input type="color" id="c-bg"><span data-i18n="cBg">Background</span></label>
+        <label><input type="color" id="c-panel"><span data-i18n="cPanel">Panels</span></label>
+      </fieldset>
+      <fieldset class="locale">
+        <legend data-i18n="rTexts">Texts for visitors</legend>
+        <label><span data-i18n="rEditing">Language you are editing</span>
+          <select id="r-locale"><option value="de">Deutsch</option><option value="en">English</option><option value="pl">Polski</option></select>
+        </label>
+        <label><span data-i18n="rTagline">Tagline</span><input id="r-tagline" type="text" maxlength="100"></label>
+        <label><span data-i18n="rWelcome">Welcome message</span><textarea id="r-welcome" rows="3" maxlength="400"></textarea></label>
+        <div class="qr" id="r-qr"></div>
+      </fieldset>
+      <label><span data-i18n="rPrompt">Instructions of your agent (visitors never see this)</span><textarea id="r-prompt" rows="16" maxlength="12000"></textarea></label>

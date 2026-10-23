@@ -45,12 +45,25 @@ function applyLang() {
   button.textContent = t('send');
   document.getElementById('reset').textContent = t('newChat');
   document.getElementById('lang').setAttribute('aria-label', t('langLabel'));
+  document.getElementById('foot-ai').textContent = t('aiLabel');
+  const rb = document.getElementById('report');
+  rb.textContent = t(rb.dataset.sent ? 'reported' : 'report');
   document.getElementById('lang').value = lang;
   // swap the welcome message only while the conversation has not started
   if (!history.length && !feed.querySelector('.you')) { feed.innerHTML = ''; showWelcome(); }
 }
 
 if (AGENT) {
+  document.getElementById('report').addEventListener('click', async (e) => {
+    const b = e.currentTarget;
+    if (b.dataset.sent) return;
+    try {
+      const res = await fetch(`/api/agents/${encodeURIComponent(AGENT.slug)}/report`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      if (!res.ok) throw new Error();
+      b.dataset.sent = '1';
+      b.textContent = t('reported');
+    } catch { /* try again later */ }
+  });
   document.getElementById('lang').addEventListener('change', (e) => {
     if (!LANGS.includes(e.target.value)) return;
     lang = e.target.value;
@@ -91,12 +104,56 @@ document.addEventListener('submit', (e) => {
   const f = e.target.closest?.('form.ask');
   if (!f) return;
   e.preventDefault();
+  if (AGENT && f.classList.contains('lead')) { sendLead(f); return; } // contact form: goes to the team, not to the AI
   if (busy || f.dataset.done) return;
   const text = describeForm(f);
   if (!text) return;
   lockForm(f, true);
   send(text, () => lockForm(f, false)); // unlock again if the request fails
 });
+
+// Contact request: the page posts it to the server itself. The AI never sees the contact data,
+// and the confirmation below is only shown after the server really stored the request.
+let pendingNote = ''; // tells the AI (in the next message) that the form was submitted
+async function sendLead(f) {
+  if (f.dataset.done || !f.reportValidity()) return;
+  const fd = new FormData(f);
+  const body = {
+    name: fd.get('name') || '', email: fd.get('email') || '', message: fd.get('message') || '',
+    consent: fd.get('consent') === 'yes', website: fd.get('website') || '', lang
+  };
+  f.nextElementSibling?.classList.contains('lead-error') && f.nextElementSibling.remove();
+  lockForm(f, true);
+  try {
+    const res = await fetch(`/api/agents/${encodeURIComponent(AGENT.slug)}/lead`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || t('leadError'));
+    const ok = document.createElement('div');
+    ok.className = 'callout success';
+    ok.textContent = t('leadThanks');
+    f.replaceWith(ok);
+    pendingNote = '[Contact form submitted] The customer sent the contact form to the team.';
+  } catch (err) {
+    lockForm(f, false);
+    const box = document.createElement('div');
+    box.className = 'callout danger lead-error';
+    box.textContent = err.message || t('leadError');
+    f.after(box);
+  }
+}
+
+// Spam trap: a field real visitors never see. Bots that fill every input reveal themselves.
+function addHoneypots(root) {
+  root.querySelectorAll('form.lead:not([data-hp])').forEach((f) => {
+    const hp = document.createElement('input');
+    hp.type = 'text'; hp.name = 'website'; hp.className = 'hp'; hp.tabIndex = -1;
+    hp.autocomplete = 'off'; hp.setAttribute('aria-hidden', 'true');
+    f.append(hp);
+    f.dataset.hp = '1';
+  });
+}
 
 // 2) quick-reply buttons: send their data-send text as the customer's message
 document.addEventListener('click', (e) => {
@@ -138,19 +195,21 @@ async function send(prompt, onFail) {
   turn.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const gen = turn.querySelector('.gen');
   const myEpoch = epoch;
+  const content = pendingNote ? `${pendingNote}\n${prompt}` : prompt; // what the AI receives; the bubble shows only `prompt`
 
   try {
     const res = await fetch(CHAT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: [...history.slice(-MAX_HISTORY), { role: 'user', content: prompt }], lang: lang || undefined })
+      body: JSON.stringify({ messages: [...history.slice(-MAX_HISTORY), { role: 'user', content }], lang: lang || undefined })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
 
     // remember the exchange only after it succeeded, so a failed request leaves the history untouched
     if (myEpoch === epoch) {
-      history.push({ role: 'user', content: prompt }, { role: 'assistant', content: data.text || '(visual reply)' });
+      history.push({ role: 'user', content }, { role: 'assistant', content: data.text || '(visual reply)' });
+      pendingNote = '';
       history = history.slice(-MAX_HISTORY);
     }
 
@@ -213,6 +272,7 @@ function showAgentWelcome() {
 
 /* ---------- staggered reveal, count-up numbers, bars, donuts, sliders ---------- */
 function enhance(root) {
+  addHoneypots(root);
   const io = new IntersectionObserver((entries) => {
     entries.forEach((en) => {
       if (!en.isIntersecting) return;
