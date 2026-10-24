@@ -1,6 +1,7 @@
 // Onboarding: describe company -> review generated agent -> publish.
 // Shared form logic and texts live in agent-form.js.
-const { t, $, fill, collect, applyUi, request, showError, onUiChange } = window.AgentForm;
+const { t, $, fill, collect, applyUi, request, showError, onUiChange, getInputs, syncLogo, logoSelected } = window.AgentForm;
+let draftId = '';
 
 function show(step) {
   for (const id of ['step-describe', 'step-review', 'step-done']) $(id).hidden = id !== step;
@@ -14,8 +15,8 @@ $('step-describe').addEventListener('submit', async (e) => {
   const btn = $('generate');
   btn.disabled = true; btn.textContent = t('generating');
   try {
-    const company = Object.fromEntries(new FormData(e.target).entries());
-    const data = await request('POST', '/api/agents/generate', { company });
+    const data = await request('POST', '/api/agents/generate', { company: getInputs(e.target) });
+    draftId = data.draftId; // the instructions stay on the server; the browser only holds this id
     fill(data.agent);
     show('step-review');
   } catch (err) {
@@ -34,7 +35,16 @@ $('step-review').addEventListener('submit', async (e) => {
   const btn = $('publish');
   btn.disabled = true; btn.textContent = t('publishing');
   try {
-    const out = await request('POST', '/api/agents', { agent: collect() });
+    const wantsLogo = logoSelected();
+    const out = await request('POST', '/api/agents', { draftId, agent: collect() });
+    $('d-logo-note').hidden = true;
+    $('d-color-note').textContent = t('colorsAdjusted');
+    $('d-color-note').hidden = !out.colorsAdjusted;
+    if (wantsLogo) {
+      try { await syncLogo(out.slug, { Authorization: 'Bearer ' + out.editToken }); }
+      catch { $('d-logo-note').textContent = t('logoFailed'); $('d-logo-note').hidden = false; }
+    }
+    $('d-expiry').textContent = t('expiresOn').replace('{date}', new Date(out.keyExpiresAt).toLocaleDateString());
     $('d-url').textContent = out.url;
     $('d-url').href = out.url;
     $('d-open').href = out.url;

@@ -1,7 +1,7 @@
 const { connectDb } = require('../db/connect');
 
 // Models whose indexes matter: the unique slug, and the TTL indexes that delete old leads and counters.
-const models = () => ['Agent', 'Counter', 'Lead', 'Report', 'Setting'].map((n) => require(`../models/${n}`));
+const models = () => ['Agent', 'Counter', 'Draft', 'Lead', 'Logo', 'Report', 'Setting'].map((n) => require(`../models/${n}`));
 
 let indexes; // built once per instance, after the first successful connection
 function ensureIndexes() {

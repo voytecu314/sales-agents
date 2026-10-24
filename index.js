@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 app.set('trust proxy', 1); // behind Vercel's proxy: req.ip is the real client IP
 app.use(securityHeaders);
+app.use('/api/agents/:slug/logo', express.json({ limit: '300kb' })); // logo upload: a resized image as base64
 app.use(express.json({ limit: '100kb' }));
 // Locally this serves /public. On Vercel the public/ folder is served by the CDN and this line is ignored.
 app.use(express.static(path.join(__dirname, 'public')));

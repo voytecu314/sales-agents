@@ -1,18 +1,24 @@
 // Owner endpoints. requireOwner has already checked the owner key and put the agent in req.agentDoc.
 const Agent = require('../models/Agent');
 const Lead = require('../models/Lead');
+const Logo = require('../models/Logo');
 const { validateAgent } = require('../services/agentSchema');
+const { normalizeCompanyInput, generatePrompt } = require('../services/metaPrompt');
 const { moderate, textOf } = require('../services/moderation');
 const { sendVerification, verifyToken } = require('../services/mailer');
 const { invalidate } = require('../services/agentCache');
-const { peek, dailyKey } = require('../services/counters');
+const { peek, hit, dailyKey } = require('../services/counters');
 const { baseUrl, DAILY_CAP } = require('./agentsController');
 const { isValidSlug } = require('../services/slug');
 const crypto = require('crypto');
 
+const REGEN_DAILY_CAP = 10; // rewrites of the instructions per agent and day (each one is an LLM call)
+
+// What the owner may see and change. NOT the system prompt: the server writes it from `inputs`.
 const editable = (a) => ({
-  name: a.name, emoji: a.emoji, language: a.language, palette: a.palette, locales: a.locales,
-  systemPrompt: a.systemPrompt, notifyEmail: a.notifyEmail || '', notifyEmailVerified: Boolean(a.notifyEmailVerified), status: a.status
+  name: a.name, emoji: a.emoji || '', language: a.language, palette: a.palette, locales: a.locales,
+  notifyEmail: a.notifyEmail || '', notifyEmailVerified: Boolean(a.notifyEmailVerified), status: a.status,
+  logoUrl: a.hasLogo ? `/api/agents/${a.slug}/logo?v=${a.logoVersion || 0}` : null
 });
 
 // GET /api/agents/:slug/owner
@@ -25,6 +31,8 @@ async function owner(req, res) {
     ]);
     res.json({
       agent: editable(a),
+      inputs: a.inputs || {},
+      keyExpiresAt: req.keyExpiresAt,
       url: `${baseUrl(req)}/a/${a.slug}`,
       usage: { today, cap: DAILY_CAP() },
       leads: leads.map((l) => ({ name: l.name, email: l.email, message: l.message, lang: l.lang, createdAt: l.createdAt }))
@@ -35,21 +43,52 @@ async function owner(req, res) {
   }
 }
 
-// PUT /api/agents/:slug   { agent: {..., status} }
+// PUT /api/agents/:slug   { agent: { branding..., status }, inputs?: { description, guided answers } }
+// If the inputs changed, the server rewrites the system prompt from them. The prompt itself is never sent or accepted.
 async function update(req, res) {
   const old = req.agentDoc;
-  const { value, errors } = validateAgent(req.body?.agent);
+  const { value, errors, notes } = validateAgent(req.body?.agent);
   if (errors.length) return res.status(400).json({ error: 'Please fix: ' + errors.slice(0, 5).join('; ') + '.' });
   const status = req.body.agent.status === 'paused' ? 'paused' : 'active';
 
+  let inputs = null;
+  if (req.body?.inputs !== undefined) {
+    const n = normalizeCompanyInput(req.body.inputs);
+    if (n.error) return res.status(400).json({ error: n.error });
+    inputs = n.value;
+  }
+  const oldInputs = normalizeCompanyInput(old.inputs).value;
+  const inputsChanged = Boolean(inputs) && JSON.stringify(inputs) !== JSON.stringify(oldInputs);
+
   try {
-    if (textOf(value) !== textOf(old)) {
-      const verdict = await moderate(textOf(value));
-      if (!verdict.ok) return res.status(400).json({ error: `This agent cannot be saved: ${verdict.reason}. Please change the instructions.` });
+    // Check what the owner wrote BEFORE spending an LLM call on it. (Prompt excluded: it is ours.)
+    const forCheck = (a, i) => textOf({ name: a.name, locales: a.locales, inputs: i, systemPrompt: '' });
+    const nextInputs = inputsChanged ? inputs : (old.inputs || {});
+    if (forCheck(value, nextInputs) !== forCheck(old, old.inputs || {})) {
+      const verdict = await moderate(forCheck(value, nextInputs));
+      if (!verdict.ok) return res.status(400).json({ error: `This agent cannot be saved: ${verdict.reason}. Please change your description.` });
+    }
+
+    let systemPrompt = old.systemPrompt;
+    if (inputsChanged) {
+      if (await hit(dailyKey('regen', old.slug), 2 * 86_400_000) > REGEN_DAILY_CAP) {
+        return res.status(429).json({ error: 'You changed the description too often today. Please try again tomorrow.' });
+      }
+      try {
+        systemPrompt = await generatePrompt(inputs);
+      } catch (err) {
+        console.error('Prompt regeneration failed:', err.message);
+        return res.status(502).json({ error: 'Could not rewrite the agent instructions right now. Nothing was changed. Please try again.' });
+      }
     }
 
     const emailChanged = value.notifyEmail !== (old.notifyEmail || '');
     const set = { ...value, status };
+    if (inputsChanged) {
+      set.systemPrompt = systemPrompt;
+      set.inputs = inputs;
+      if (inputs.language !== 'auto') set.language = inputs.language;
+    }
     if (emailChanged) set.notifyEmailVerified = false;   // a new address must be confirmed first
 
     await Agent.updateOne({ slug: old.slug }, { $set: set }); // slug, plan and key hash are never taken from the request
@@ -58,7 +97,7 @@ async function update(req, res) {
     if (emailChanged && value.notifyEmail) {
       await sendVerification({ slug: old.slug, name: value.name, notifyEmail: value.notifyEmail }, baseUrl(req)).catch((e) => console.error('Verification mail failed:', e.message));
     }
-    res.json({ ok: true, emailVerificationSent: Boolean(emailChanged && value.notifyEmail) });
+    res.json({ ok: true, emailVerificationSent: Boolean(emailChanged && value.notifyEmail), instructionsRewritten: inputsChanged, colorsAdjusted: notes.includes('palette') });
   } catch (err) {
     console.error('Owner update failed:', err);
     res.status(500).json({ error: 'Could not save. Please try again.' });
@@ -68,7 +107,7 @@ async function update(req, res) {
 // DELETE /api/agents/:slug : removes the agent and its leads
 async function remove(req, res) {
   try {
-    await Promise.all([Agent.deleteOne({ slug: req.agentDoc.slug }), Lead.deleteMany({ slug: req.agentDoc.slug })]);
+    await Promise.all([Agent.deleteOne({ slug: req.agentDoc.slug }), Lead.deleteMany({ slug: req.agentDoc.slug }), Logo.deleteOne({ slug: req.agentDoc.slug })]);
     invalidate(req.agentDoc.slug);
     res.json({ ok: true });
   } catch (err) {

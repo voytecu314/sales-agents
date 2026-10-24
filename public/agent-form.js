@@ -5,6 +5,15 @@
 
 const TEXT = {
   en: {
+    colorsAdjusted: 'Some colors were adjusted slightly so that text stays readable.',
+    dTitle: 'Describe your company', dPlaceholder: 'e.g. We are a family-run bakery in Hannover. We sell sourdough bread, cakes for weddings (from 45 EUR) and offer a weekly bread subscription…',
+    dHint: 'Write freely: what you sell, prices, who your customers are, how you talk to them, frequent questions, what the agent must never promise, how to reach you. The more you write, the better your agent.',
+    gSummary: 'Optional: answer guided questions (alone or in addition to your text)',
+    logoLabel: 'Logo (optional)', logoRemove: 'Remove logo', logoHint: 'PNG, JPEG or WebP. It is shrunk automatically and shown in the header of your agent.', logoType: 'Please choose a PNG, JPEG or WebP image.', logoFailed: 'Your agent is live, but the logo could not be uploaded. You can add it on the edit page.',
+    eInputsTitle: 'What your agent knows', eInputsHint: 'Change your description and the instructions of your agent are rewritten automatically when you save. The instructions themselves are managed by us.', eBrandTitle: 'Look and texts',
+    linkTitle: 'Links that start a conversation', linkHint: 'Put a link with a topic on your website. When a visitor clicks it, your agent answers that topic right away.', linkTopic: 'Topic or question', linkPh: 'e.g. What does a wedding cake cost?', linkCopy: 'Copy link',
+    expiresOn: 'Owner key valid until {date}. After that you need a renewal to edit your agent (the agent itself keeps running).', rewritten: 'Saved. The instructions of your agent were rewritten from your description.', savingLong: 'Saving… rewriting the instructions can take up to a minute',
+    supportNote: 'Lost your key or is it expired? Contact {email}.', supportNone: 'Lost your key or is it expired? Contact the operator of this service.',
     copyEdit: 'Copy edit link', editLink: 'Edit page',
     rNotify: 'E-mail for contact requests (optional)', rNotifyHint: 'Visitors can ask your team to contact them. We first send a confirmation link to this address.',
     editTitle: 'Edit your AI sales agent', keyLabel: 'Owner key', keyGo: 'Open', eStatus: 'Status', sActive: 'Online', sPaused: 'Paused (visitors see "unavailable")',
@@ -12,14 +21,14 @@ const TEXT = {
     leadsTitle: 'Contact requests', leadsHint: 'The last 50 requests. They are deleted automatically after 90 days.', noLeads: 'No requests yet.',
     usage: 'Messages today: {n} of {cap}', verifyPending: 'Not confirmed yet: open the link we sent to this address. Until then requests are only stored here, not e-mailed.',
     verifyOk: 'Address confirmed. New requests are e-mailed to it.', verifySent: 'Saved. We sent a confirmation link to the new address.', authError: 'This owner key is not valid.',
-    title: 'Create your AI sales agent', subtitle: 'Describe your company. You get a sales agent on its own link.',
-    fName: 'Company name *', fOffer: 'What do you sell? *', fPricing: 'Offer and prices', fAudience: 'Target audience',
+    title: 'Create your AI sales agent', subtitle: 'Describe your company in your own words. You get a sales agent on its own link.',
+    fName: 'Company name', fOffer: 'What do you sell?', fPricing: 'Offer and prices', fAudience: 'Target audience',
     fTone: 'Tone of voice', phTone: 'friendly, professional, short answers…', fLanguage: 'Main language of your customers', auto: 'Detect automatically',
     fColors: 'Brand colors', phColors: 'e.g. navy blue and orange, or #1d4ed8',
     fFaqs: 'FAQs', fRules: 'Rules and limits (what the agent must never promise or say)', fContact: 'Contact options',
     generate: 'Generate my agent', generating: 'Generating… this can take up to a minute',
     reviewHint: 'Review everything. You can change all texts, colors and the instructions of your agent.',
-    rName: 'Display name', rEmoji: 'Emoji', rColors: 'Colors', cBg: 'Background', cPanel: 'Panels',
+    rName: 'Display name', rEmoji: 'Emoji (optional)', rColors: 'Colors', cBg: 'Background', cPanel: 'Panels',
     rTexts: 'Texts for visitors', rEditing: 'Language you are editing', rTagline: 'Tagline', rWelcome: 'Welcome message',
     qLabel: 'Button text', qSend: 'Message sent on click',
     rPrompt: 'Instructions of your agent (visitors never see this)', back: 'Back', publish: 'Publish my agent', publishing: 'Publishing…',
@@ -28,6 +37,15 @@ const TEXT = {
     copyUrl: 'Copy link', copyKey: 'Copy key', copied: 'Copied', open: 'Open agent', errGeneric: 'Something went wrong. Please try again.'
   },
   de: {
+    colorsAdjusted: 'Einige Farben wurden leicht angepasst, damit der Text lesbar bleibt.',
+    dTitle: 'Beschreiben Sie Ihr Unternehmen', dPlaceholder: 'z. B. Wir sind eine Familienbäckerei in Hannover. Wir verkaufen Sauerteigbrot, Hochzeitstorten (ab 45 EUR) und bieten ein wöchentliches Brot-Abo an…',
+    dHint: 'Schreiben Sie frei: was Sie verkaufen, Preise, wer Ihre Kunden sind, wie Sie mit ihnen sprechen, häufige Fragen, was der Agent nie versprechen darf, wie man Sie erreicht. Je mehr Sie schreiben, desto besser wird Ihr Agent.',
+    gSummary: 'Optional: Fragen beantworten (allein oder zusätzlich zu Ihrem Text)',
+    logoLabel: 'Logo (optional)', logoRemove: 'Logo entfernen', logoHint: 'PNG, JPEG oder WebP. Es wird automatisch verkleinert und im Kopf Ihres Agenten angezeigt.', logoType: 'Bitte wählen Sie ein PNG-, JPEG- oder WebP-Bild.', logoFailed: 'Ihr Agent ist online, aber das Logo konnte nicht hochgeladen werden. Sie können es auf der Bearbeitungsseite hinzufügen.',
+    eInputsTitle: 'Was Ihr Agent weiß', eInputsHint: 'Ändern Sie Ihre Beschreibung, und die Anweisungen Ihres Agenten werden beim Speichern automatisch neu geschrieben. Die Anweisungen selbst verwalten wir.', eBrandTitle: 'Aussehen und Texte',
+    linkTitle: 'Links, die ein Gespräch starten', linkHint: 'Setzen Sie einen Link mit Thema auf Ihre Website. Klickt ein Besucher darauf, beantwortet Ihr Agent sofort dieses Thema.', linkTopic: 'Thema oder Frage', linkPh: 'z. B. Was kostet eine Hochzeitstorte?', linkCopy: 'Link kopieren',
+    expiresOn: 'Besitzer-Schlüssel gültig bis {date}. Danach brauchen Sie eine Verlängerung zum Bearbeiten (der Agent selbst läuft weiter).', rewritten: 'Gespeichert. Die Anweisungen Ihres Agenten wurden aus Ihrer Beschreibung neu geschrieben.', savingLong: 'Wird gespeichert… das Neuschreiben der Anweisungen kann bis zu einer Minute dauern',
+    supportNote: 'Schlüssel verloren oder abgelaufen? Kontakt: {email}.', supportNone: 'Schlüssel verloren oder abgelaufen? Wenden Sie sich an den Betreiber dieses Dienstes.',
     copyEdit: 'Bearbeitungslink kopieren', editLink: 'Bearbeiten',
     rNotify: 'E-Mail für Kontaktanfragen (optional)', rNotifyHint: 'Besucher können Ihr Team um Kontakt bitten. An diese Adresse senden wir zuerst einen Bestätigungslink.',
     editTitle: 'KI-Verkaufsagenten bearbeiten', keyLabel: 'Besitzer-Schlüssel', keyGo: 'Öffnen', eStatus: 'Status', sActive: 'Online', sPaused: 'Pausiert (Besucher sehen „nicht verfügbar“)',
@@ -36,13 +54,13 @@ const TEXT = {
     usage: 'Nachrichten heute: {n} von {cap}', verifyPending: 'Noch nicht bestätigt: Öffnen Sie den Link, den wir an diese Adresse gesendet haben. Bis dahin werden Anfragen nur hier gespeichert, nicht per E-Mail verschickt.',
     verifyOk: 'Adresse bestätigt. Neue Anfragen werden per E-Mail an sie gesendet.', verifySent: 'Gespeichert. Wir haben einen Bestätigungslink an die neue Adresse gesendet.', authError: 'Dieser Besitzer-Schlüssel ist ungültig.',
     title: 'Erstellen Sie Ihren KI-Verkaufsagenten', subtitle: 'Beschreiben Sie Ihr Unternehmen. Sie erhalten einen Verkaufsagenten unter eigenem Link.',
-    fName: 'Firmenname *', fOffer: 'Was verkaufen Sie? *', fPricing: 'Angebot und Preise', fAudience: 'Zielgruppe',
+    fName: 'Firmenname', fOffer: 'Was verkaufen Sie?', fPricing: 'Angebot und Preise', fAudience: 'Zielgruppe',
     fTone: 'Tonalität', phTone: 'freundlich, professionell, kurze Antworten…', fLanguage: 'Hauptsprache Ihrer Kunden', auto: 'Automatisch erkennen',
     fColors: 'Markenfarben', phColors: 'z. B. Marineblau und Orange oder #1d4ed8',
     fFaqs: 'FAQs', fRules: 'Regeln und Grenzen (was der Agent nie versprechen oder sagen darf)', fContact: 'Kontaktmöglichkeiten',
     generate: 'Meinen Agenten erstellen', generating: 'Wird erstellt… das kann bis zu einer Minute dauern',
     reviewHint: 'Prüfen Sie alles. Sie können alle Texte, Farben und die Anweisungen Ihres Agenten ändern.',
-    rName: 'Anzeigename', rEmoji: 'Emoji', rColors: 'Farben', cBg: 'Hintergrund', cPanel: 'Flächen',
+    rName: 'Anzeigename', rEmoji: 'Emoji (optional)', rColors: 'Farben', cBg: 'Hintergrund', cPanel: 'Flächen',
     rTexts: 'Texte für Besucher', rEditing: 'Sprache, die Sie bearbeiten', rTagline: 'Slogan', rWelcome: 'Begrüßung',
     qLabel: 'Button-Text', qSend: 'Nachricht beim Klick',
     rPrompt: 'Anweisungen Ihres Agenten (Besucher sehen diese nie)', back: 'Zurück', publish: 'Agenten veröffentlichen', publishing: 'Wird veröffentlicht…',
@@ -51,6 +69,15 @@ const TEXT = {
     copyUrl: 'Link kopieren', copyKey: 'Schlüssel kopieren', copied: 'Kopiert', open: 'Agenten öffnen', errGeneric: 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.'
   },
   pl: {
+    colorsAdjusted: 'Niektóre kolory zostały lekko dopasowane, aby tekst był czytelny.',
+    dTitle: 'Opisz swoją firmę', dPlaceholder: 'np. Jesteśmy rodzinną piekarnią w Hanowerze. Sprzedajemy chleb na zakwasie, torty weselne (od 45 EUR) i oferujemy cotygodniową subskrypcję chleba…',
+    dHint: 'Pisz swobodnie: co sprzedajesz, ceny, kim są Twoi klienci, jak z nimi rozmawiasz, częste pytania, czego agent nigdy nie może obiecywać, jak się z Tobą skontaktować. Im więcej napiszesz, tym lepszy będzie agent.',
+    gSummary: 'Opcjonalnie: odpowiedz na pytania (samodzielnie lub dodatkowo do swojego tekstu)',
+    logoLabel: 'Logo (opcjonalnie)', logoRemove: 'Usuń logo', logoHint: 'PNG, JPEG lub WebP. Zostanie automatycznie zmniejszone i pokazane w nagłówku Twojego agenta.', logoType: 'Wybierz obraz PNG, JPEG lub WebP.', logoFailed: 'Twój agent działa, ale nie udało się wgrać logo. Możesz je dodać na stronie edycji.',
+    eInputsTitle: 'Co wie Twój agent', eInputsHint: 'Zmień opis, a instrukcje agenta zostaną przy zapisie automatycznie napisane od nowa. Same instrukcje zarządzamy my.', eBrandTitle: 'Wygląd i teksty',
+    linkTitle: 'Linki, które zaczynają rozmowę', linkHint: 'Umieść na swojej stronie link z tematem. Gdy odwiedzający w niego kliknie, agent od razu odpowie na ten temat.', linkTopic: 'Temat lub pytanie', linkPh: 'np. Ile kosztuje tort weselny?', linkCopy: 'Kopiuj link',
+    expiresOn: 'Klucz właściciela ważny do {date}. Potem do edycji potrzebne jest odnowienie (sam agent działa dalej).', rewritten: 'Zapisano. Instrukcje agenta zostały napisane od nowa na podstawie Twojego opisu.', savingLong: 'Zapisywanie… przepisanie instrukcji może potrwać do minuty',
+    supportNote: 'Zgubiony lub wygasły klucz? Kontakt: {email}.', supportNone: 'Zgubiony lub wygasły klucz? Skontaktuj się z operatorem usługi.',
     copyEdit: 'Kopiuj link edycji', editLink: 'Strona edycji',
     rNotify: 'E-mail do zgłoszeń kontaktowych (opcjonalnie)', rNotifyHint: 'Odwiedzający mogą poprosić Twój zespół o kontakt. Najpierw wyślemy na ten adres link potwierdzający.',
     editTitle: 'Edytuj agenta sprzedaży AI', keyLabel: 'Klucz właściciela', keyGo: 'Otwórz', eStatus: 'Status', sActive: 'Online', sPaused: 'Wstrzymany (odwiedzający widzą „niedostępny”)',
@@ -59,13 +86,13 @@ const TEXT = {
     usage: 'Wiadomości dzisiaj: {n} z {cap}', verifyPending: 'Jeszcze niepotwierdzony: otwórz link wysłany na ten adres. Do tego czasu zgłoszenia są tylko zapisywane tutaj, bez wysyłki e-mailem.',
     verifyOk: 'Adres potwierdzony. Nowe zgłoszenia są wysyłane na ten adres.', verifySent: 'Zapisano. Wysłaliśmy link potwierdzający na nowy adres.', authError: 'Ten klucz właściciela jest nieprawidłowy.',
     title: 'Stwórz swojego agenta sprzedaży AI', subtitle: 'Opisz swoją firmę. Dostaniesz agenta sprzedaży pod własnym linkiem.',
-    fName: 'Nazwa firmy *', fOffer: 'Co sprzedajesz? *', fPricing: 'Oferta i ceny', fAudience: 'Grupa docelowa',
+    fName: 'Nazwa firmy', fOffer: 'Co sprzedajesz?', fPricing: 'Oferta i ceny', fAudience: 'Grupa docelowa',
     fTone: 'Styl komunikacji', phTone: 'przyjazny, profesjonalny, krótkie odpowiedzi…', fLanguage: 'Główny język Twoich klientów', auto: 'Wykryj automatycznie',
     fColors: 'Kolory marki', phColors: 'np. granatowy i pomarańczowy lub #1d4ed8',
     fFaqs: 'FAQ', fRules: 'Zasady i ograniczenia (czego agent nigdy nie może obiecywać ani mówić)', fContact: 'Formy kontaktu',
     generate: 'Wygeneruj mojego agenta', generating: 'Generowanie… może potrwać do minuty',
     reviewHint: 'Sprawdź wszystko. Możesz zmienić wszystkie teksty, kolory i instrukcje agenta.',
-    rName: 'Wyświetlana nazwa', rEmoji: 'Emoji', rColors: 'Kolory', cBg: 'Tło', cPanel: 'Panele',
+    rName: 'Wyświetlana nazwa', rEmoji: 'Emoji (opcjonalnie)', rColors: 'Kolory', cBg: 'Tło', cPanel: 'Panele',
     rTexts: 'Teksty dla odwiedzających', rEditing: 'Edytowany język', rTagline: 'Hasło', rWelcome: 'Wiadomość powitalna',
     qLabel: 'Tekst przycisku', qSend: 'Wiadomość wysyłana po kliknięciu',
     rPrompt: 'Instrukcje agenta (odwiedzający ich nie widzą)', back: 'Wstecz', publish: 'Opublikuj agenta', publishing: 'Publikowanie…',
@@ -118,7 +145,7 @@ const TEXT = {
       method, headers: { 'Content-Type': 'application/json', ...headers }, body: body === undefined ? undefined : JSON.stringify(body)
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { const err = new Error(data.error || t('errGeneric')); err.status = res.status; throw err; }
+    if (!res.ok) { const err = new Error(data.error || t('errGeneric')); err.status = res.status; err.code = data.code; throw err; }
     return data;
   }
 
@@ -130,7 +157,7 @@ const TEXT = {
     $('r-emoji').value = d.emoji;
     $('r-notify').value = d.notifyEmail || '';
     for (const k of PALETTE_KEYS) $('c-' + k).value = d.palette[k];
-    $('r-prompt').value = d.systemPrompt;
+    setLogo(d.logoUrl || null);
     $('r-locale').value = editing;
     loadLocale();
   }
@@ -181,10 +208,75 @@ const TEXT = {
     draft.name = $('r-name').value;
     draft.emoji = $('r-emoji').value;
     draft.notifyEmail = $('r-notify').value;
-    draft.systemPrompt = $('r-prompt').value;
     for (const k of PALETTE_KEYS) draft.palette[k] = $('c-' + k).value;
     return draft;
   }
 
-  window.AgentForm = { t, $, fill, collect, applyUi, request, showError, showNotice, onUiChange: (fn) => listeners.push(fn) };
+  /* ---------- the owner's description (free text + guided answers) ---------- */
+  const GUIDED = ['name', 'offer', 'pricing', 'audience', 'tone', 'brandColors', 'faqs', 'rules', 'contact'];
+  function getInputs(box) {
+    const out = {};
+    box.querySelectorAll('[name]').forEach((el) => { out[el.name] = el.value; });
+    return out;
+  }
+  function setInputs(box, inputs) {
+    box.querySelectorAll('[name]').forEach((el) => { el.value = inputs?.[el.name] ?? (el.tagName === 'SELECT' ? 'auto' : ''); });
+    const details = box.querySelector('details.guided');
+    if (details) details.open = GUIDED.some((k) => String(inputs?.[k] || '').trim());
+  }
+
+  /* ---------- logo: shrink in the browser, upload as base64 ---------- */
+  const logo = { base64: null, remove: false };
+  function setLogo(url) {
+    logo.base64 = null; logo.remove = false;
+    const img = $('r-logo-preview');
+    img.hidden = !url; if (url) img.src = url;
+    $('r-logo-remove').hidden = !url;
+    $('r-logo').value = '';
+  }
+  function loadImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error(t('logoType')));
+      reader.onload = () => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error(t('logoType'))); img.src = reader.result; };
+      reader.readAsDataURL(file);
+    });
+  }
+  async function shrink(file) {
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 8_000_000) throw new Error(t('logoType'));
+    const img = await loadImage(file);
+    for (const max of [256, 192, 128]) {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const dataUrl = c.toDataURL('image/webp', 0.9); // browsers without WebP encoding return PNG instead
+      const base64 = dataUrl.split(',')[1];
+      if (base64.length * 0.75 <= 140 * 1024) return { dataUrl, base64 };
+    }
+    throw new Error(t('logoType'));
+  }
+  $('r-logo').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const { dataUrl, base64 } = await shrink(file);
+      logo.base64 = base64; logo.remove = false;
+      $('r-logo-preview').src = dataUrl; $('r-logo-preview').hidden = false; $('r-logo-remove').hidden = false;
+      showError('');
+    } catch (err) { showError(err.message); e.target.value = ''; }
+  });
+  $('r-logo-remove').addEventListener('click', () => {
+    logo.base64 = null; logo.remove = true;
+    $('r-logo-preview').hidden = true; $('r-logo-remove').hidden = true; $('r-logo').value = '';
+  });
+  // after the agent exists: upload or remove the logo with the owner key
+  async function syncLogo(slug, headers) {
+    const url = `/api/agents/${encodeURIComponent(slug)}/logo`;
+    if (logo.base64) await request('PUT', url, { image: logo.base64 }, headers);
+    else if (logo.remove) await request('DELETE', url, undefined, headers);
+    logo.base64 = null; logo.remove = false;
+  }
+
+  window.AgentForm = { getInputs, setInputs, syncLogo, hasLogoChange: () => Boolean(logo.base64 || logo.remove), logoSelected: () => Boolean(logo.base64), t, $, fill, collect, applyUi, request, showError, showNotice, onUiChange: (fn) => listeners.push(fn) };
 })();

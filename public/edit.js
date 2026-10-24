@@ -1,6 +1,6 @@
 // Owner page: /edit/:slug#<owner key>. The key is read from the URL fragment (never sent to the server
 // in the address), moved to sessionStorage for this tab, and sent as a Bearer header.
-const { t, $, fill, collect, applyUi, request, showError, showNotice, onUiChange } = window.AgentForm;
+const { t, $, fill, collect, applyUi, request, showError, showNotice, onUiChange, getInputs, setInputs, syncLogo, hasLogoChange } = window.AgentForm;
 
 const slug = location.pathname.split('/')[2] || '';
 const STORE_KEY = 'sa_owner_' + slug;
@@ -22,7 +22,27 @@ function renderMeta() {
   const a = data.agent;
   $('e-verify').textContent = !a.notifyEmail ? '' : a.notifyEmailVerified ? t('verifyOk') : t('verifyPending');
   $('e-verify').hidden = !a.notifyEmail;
+  $('e-expiry').textContent = t('expiresOn').replace('{date}', new Date(data.keyExpiresAt).toLocaleDateString());
+  const note = $('support-note'), mail = note.dataset.support;
+  note.textContent = mail ? t('supportNote').replace('{email}', mail) : t('supportNone');
 }
+
+function showSupport() {
+  const mail = $('support-note').dataset.support;
+  $('support-note').textContent = mail ? t('supportNote').replace('{email}', mail) : t('supportNone');
+}
+
+// link builder: <agent url>?ask=<topic>
+function updateLink() {
+  if (!data) return;
+  const topic = $('l-topic').value.trim().slice(0, 300);
+  $('l-url').value = topic ? `${data.url}?ask=${encodeURIComponent(topic)}` : data.url;
+}
+$('l-topic').addEventListener('input', updateLink);
+$('l-copy').addEventListener('click', async (e) => {
+  try { await navigator.clipboard.writeText($('l-url').value); const old = e.target.textContent; e.target.textContent = t('copied'); setTimeout(() => { e.target.textContent = old; }, 1500); }
+  catch { $('l-url').select(); }
+});
 
 function renderLeads() {
   const box = $('leads');
@@ -47,20 +67,25 @@ async function load() {
   try {
     data = await api('GET');
     fill(data.agent);
+    setInputs($('inputs-box'), data.inputs);
     $('e-status').value = data.agent.status;
     $('e-url').textContent = data.url;
     $('e-url').href = data.url;
     $('key-form').hidden = true;
     $('edit-form').hidden = false;
     $('leads-box').hidden = false;
+    $('link-box').hidden = false;
+    updateLink();
     renderMeta();
     renderLeads();
   } catch (err) {
     $('edit-form').hidden = true;
     $('leads-box').hidden = true;
+    $('link-box').hidden = true;
     $('key-form').hidden = false;
+    showSupport();
     try { sessionStorage.removeItem(STORE_KEY); } catch { /* storage blocked */ }
-    showError(err.status === 401 ? t('authError') : err.message);
+    showError(err.status === 401 && err.code !== 'key_expired' ? t('authError') : err.message);
   }
 }
 
@@ -75,15 +100,16 @@ $('edit-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   showError(''); showNotice('');
   const btn = $('save');
-  btn.disabled = true; btn.textContent = t('saving');
+  btn.disabled = true; btn.textContent = t('savingLong');
   try {
     const agent = collect();
     agent.status = $('e-status').value;
-    const out = await api('PUT', { agent });
+    const out = await api('PUT', { agent, inputs: getInputs($('inputs-box')) });
+    if (hasLogoChange()) await syncLogo(slug, auth());
     await load();
-    showNotice(out.emailVerificationSent ? t('verifySent') : t('saved'));
+    showNotice((out.emailVerificationSent ? t('verifySent') : out.instructionsRewritten ? t('rewritten') : t('saved')) + (out.colorsAdjusted ? ' ' + t('colorsAdjusted') : ''));
   } catch (err) {
-    showError(err.status === 401 ? t('authError') : err.message);
+    showError(err.status === 401 && err.code !== 'key_expired' ? t('authError') : err.message);
   } finally {
     btn.disabled = false; btn.textContent = t('save');
   }
@@ -98,6 +124,6 @@ $('delete').addEventListener('click', async () => {
   } catch (err) { showError(err.message); }
 });
 
-onUiChange(renderMeta);
+onUiChange(() => { renderMeta(); updateLink(); showSupport(); });
 applyUi();
-if (token) load(); else $('key-form').hidden = false;
+if (token) load(); else { $('key-form').hidden = false; showSupport(); }

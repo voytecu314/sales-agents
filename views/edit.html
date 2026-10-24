@@ -29,6 +29,7 @@
 
     <!-- no owner key in the address: ask for it -->
     <form id="key-form" class="panel-form" hidden autocomplete="off">
+      <p class="hint" id="support-note" data-support="%%SUPPORT_EMAIL%%"></p>
       <label><span data-i18n="keyLabel">Owner key</span><input id="key-input" type="text" autocomplete="off" required></label>
       <button class="btn" type="submit" data-i18n="keyGo">Open</button>
     </form>
@@ -40,6 +41,15 @@
         </label>
         <p class="hint" id="e-usage"></p>
       </div>
+      <p class="hint" id="e-expiry"></p>
+
+      <h2 data-i18n="eInputsTitle">What your agent knows</h2>
+      <p class="hint" data-i18n="eInputsHint">Change your description and your agent's instructions are rewritten automatically when you save. The instructions themselves are managed by us.</p>
+      <div id="inputs-box">
+%%DESCRIBE_FIELDS%%
+      </div>
+
+      <h2 data-i18n="eBrandTitle">Look and texts</h2>
       %%REVIEW_FORM%%
       <p class="hint" id="e-verify"></p>
       <div class="actions-row">
@@ -47,6 +57,14 @@
         <button class="ghost" type="button" id="delete" data-i18n="delete">Delete agent</button>
       </div>
     </form>
+
+    <section id="link-box" class="panel-form" hidden>
+      <h2 data-i18n="linkTitle">Links that start a conversation</h2>
+      <p class="hint" data-i18n="linkHint">Put a link with a topic on your website. When a visitor clicks it, your agent answers that topic right away.</p>
+      <label><span data-i18n="linkTopic">Topic or question</span><input id="l-topic" type="text" maxlength="300" data-i18n-ph="linkPh"></label>
+      <input id="l-url" type="text" readonly>
+      <div class="actions-row"><button class="ghost" type="button" id="l-copy" data-i18n="linkCopy">Copy link</button></div>
+    </section>
 
     <section id="leads-box" class="panel-form" hidden>
       <h2 data-i18n="leadsTitle">Contact requests</h2>

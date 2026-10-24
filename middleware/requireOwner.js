@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const Agent = require('../models/Agent');
 const { isValidSlug } = require('../services/slug');
-const { hashToken } = require('../services/agentService');
+const { hashToken, expiresAtOf } = require('../services/ownerKey');
 
 // Owner access without accounts: "Authorization: Bearer <owner key>". Only the SHA-256 hash is stored.
 async function requireOwner(req, res, next) {
@@ -18,8 +18,14 @@ async function requireOwner(req, res, next) {
     const b = Buffer.from(doc.editTokenHash || '', 'hex');
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return deny();
 
+    const expires = expiresAtOf(doc);
+    if (expires.getTime() < Date.now()) { // key is right but too old: renewal goes through the admin
+      return res.status(401).json({ error: 'This owner key has expired. Please contact support to renew it.', code: 'key_expired' });
+    }
+
     delete doc.editTokenHash;
     req.agentDoc = doc;
+    req.keyExpiresAt = expires;
     next();
   } catch (err) {
     console.error('Owner auth failed:', err.message);

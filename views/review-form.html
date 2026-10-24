@@ -1,7 +1,16 @@
 <p class="hint" data-i18n="reviewHint">Review everything. You can change all texts, colors and the instructions of your agent.</p>
       <div class="two">
         <label><span data-i18n="rName">Display name</span><input id="r-name" type="text" maxlength="60" required></label>
-        <label><span data-i18n="rEmoji">Emoji</span><input id="r-emoji" type="text" maxlength="16"></label>
+        <label><span data-i18n="rEmoji">Emoji (optional)</span><input id="r-emoji" type="text" maxlength="16"></label>
+      </div>
+      <div class="logo-box">
+        <span data-i18n="logoLabel">Logo (optional)</span>
+        <div class="logo-row">
+          <img id="r-logo-preview" class="logo-preview" alt="" hidden>
+          <input type="file" id="r-logo" accept="image/png,image/jpeg,image/webp">
+          <button type="button" class="ghost" id="r-logo-remove" data-i18n="logoRemove" hidden>Remove logo</button>
+        </div>
+        <p class="hint" data-i18n="logoHint">PNG, JPEG or WebP. It is shrunk automatically and shown in the header of your agent instead of an emoji.</p>
       </div>
       <label><span data-i18n="rNotify">E-mail for contact requests (optional)</span><input id="r-notify" type="email" maxlength="254" autocomplete="off"></label>
       <p class="hint" id="r-notify-hint" data-i18n="rNotifyHint">Visitors can ask your team to contact them. We first send a confirmation link to this address.</p>
@@ -22,4 +31,3 @@
         <label><span data-i18n="rWelcome">Welcome message</span><textarea id="r-welcome" rows="3" maxlength="400"></textarea></label>
         <div class="qr" id="r-qr"></div>
       </fieldset>
-      <label><span data-i18n="rPrompt">Instructions of your agent (visitors never see this)</span><textarea id="r-prompt" rows="16" maxlength="12000"></textarea></label>

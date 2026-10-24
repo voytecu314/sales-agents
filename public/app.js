@@ -320,3 +320,17 @@ function countUp(el) {
     if (t < 1) requestAnimationFrame(tick);
   })(start);
 }
+
+/* ---------- start the conversation from the link: /a/<agent>?ask=<question> ----------
+ * Lets the company put links with a topic on its website. The text is treated like anything a visitor types:
+ * shown as the visitor's message, capped, and sent through the normal chat endpoint (same limits and checks). */
+if (AGENT) {
+  const params = new URLSearchParams(location.search);
+  const ask = (params.get('ask') || params.get('q') || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  if (ask) {
+    params.delete('ask'); params.delete('q');
+    const rest = params.toString();
+    window.history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash); // a reload does not ask again
+    send(ask);
+  }
+}

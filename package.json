@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "admin": "node scripts/admin.js"
   },
   "engines": {
     "node": ">=18"
@@ -16,6 +17,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "groq-sdk": "^1.1.2",
-    "mongoose": "^9.11.3"
+    "mongoose": "^9.11.3",
+    "nodemailer": "^10.2.1"
   }
 }

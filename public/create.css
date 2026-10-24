@@ -5,7 +5,7 @@
 .panel-form label { display: grid; gap: 6px; font-size: .9rem; color: var(--muted); }
 .panel-form input[type=text], .panel-form textarea, .panel-form select {
   width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px;
-  background: rgba(255,255,255,.05); color: var(--text); font: inherit;
+  background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text); font: inherit;
 }
 .panel-form textarea { resize: vertical; }
 .panel-form select option { color: #111; }
@@ -31,3 +31,13 @@ a.ghost { display: inline-block; text-decoration: none; padding: 10px 16px; bord
 .lead-item { padding: 12px 0; border-top: 1px solid var(--line); display: grid; gap: 4px; }
 .lead-item p { margin: 0; color: var(--muted); white-space: pre-wrap; }
 .lead-item small { color: var(--muted); }
+
+.big textarea { min-height: 200px; font-size: 1.02rem; }
+details.guided { border: 1px solid var(--line); border-radius: 14px; padding: 4px 16px; }
+details.guided > summary { cursor: pointer; padding: 12px 0; color: var(--text); font-weight: 600; }
+.guided-body { display: grid; gap: 16px; padding: 4px 0 16px; }
+.logo-box { display: grid; gap: 8px; color: var(--muted); font-size: .9rem; }
+.logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.logo-preview { height: 48px; width: auto; max-width: 160px; object-fit: contain; border-radius: 10px; background: color-mix(in srgb, var(--text) 6%, transparent); padding: 4px; }
+.logo-preview[hidden], #r-logo-remove[hidden] { display: none; }
+h2 { font: 700 1.2rem var(--display); margin: 8px 0 0; }

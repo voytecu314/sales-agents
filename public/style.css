@@ -1,7 +1,7 @@
 @property --p { syntax: '<number>'; inherits: false; initial-value: 0; }
 
 :root {
-  --bg: #0f0a1f; --panel: #1c1538; --line: rgba(255,255,255,.1);
+  --bg: #0f0a1f; --panel: #1c1538; --line: color-mix(in srgb, var(--text) 10%, transparent);
   --text: #f1edff; --muted: #b0a8d0;
   --violet: #8b5cf6; --coral: #ff7a59; --mint: #5eead4; --amber: #fbbf24; --rose: #fb7185;
   --r: 18px;
@@ -31,9 +31,9 @@ body {
   flex: 1; resize: vertical; min-height: 52px; max-height: 220px; padding: 12px 14px;
   background: transparent; border: 0; outline: 0; color: var(--text); font: inherit;
 }
-.composer textarea::placeholder { color: #8a82ad; }
+.composer textarea::placeholder { color: color-mix(in srgb, var(--text) 45%, transparent); }
 .composer button {
-  border: 0; cursor: pointer; padding: 14px 22px; border-radius: 14px; color: #140c2b;
+  border: 0; cursor: pointer; padding: 14px 22px; border-radius: 14px; color: var(--on-btn, #140c2b);
   font: 800 .95rem var(--display); background: linear-gradient(135deg, var(--mint), var(--violet));
   transition: transform .15s, filter .15s;
 }
@@ -43,7 +43,7 @@ body {
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
 .chips button {
   cursor: pointer; padding: 7px 14px; border-radius: 99px; color: var(--muted); font: inherit; font-size: .88rem;
-  background: rgba(255,255,255,.04); border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--text) 4%, transparent); border: 1px solid var(--line);
 }
 .chips button:hover { color: var(--text); border-color: var(--violet); }
 :focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
@@ -68,12 +68,12 @@ body {
   background: radial-gradient(circle, color-mix(in srgb, var(--mint) 35%, transparent), transparent 65%); animation: drift 9s ease-in-out infinite alternate;
 }
 .hero h2 { font-size: clamp(1.7rem, 4.5vw, 2.5rem); font-weight: 800; }
-.hero p { color: #ddd6ff; max-width: 56ch; position: relative; z-index: 1; }
+.hero p { color: color-mix(in srgb, var(--text) 85%, transparent); max-width: 56ch; position: relative; z-index: 1; }
 .hero > * { position: relative; z-index: 1; }
 
 .icon {
   display: inline-grid; place-items: center; width: 46px; height: 46px; border-radius: 14px;
-  background: rgba(255,255,255,.1); color: var(--mint); flex: none;
+  background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--mint); flex: none;
 }
 .icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .icon.pulse { animation: pulse 2.4s ease-in-out infinite; }
@@ -97,20 +97,20 @@ body {
 .row { display: flex; flex-wrap: wrap; gap: 8px; }
 .badge {
   display: inline-block; padding: 3px 11px; border-radius: 99px; font-size: .8rem; font-weight: 600;
-  background: color-mix(in srgb, var(--violet) 22%, transparent); color: #d9ccff;
+  background: color-mix(in srgb, var(--violet) 22%, transparent); color: var(--text);
 }
 .badge.good { background: color-mix(in srgb, var(--mint) 18%, transparent); color: var(--mint); }
 .badge.warn { background: rgba(251,191,36,.18); color: var(--amber); }
 .badge.bad { background: rgba(251,113,133,.18); color: var(--rose); }
 
 .bar-row { display: flex; justify-content: space-between; font-size: .9rem; margin: 10px 0 6px; }
-.progress { height: 10px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+.progress { height: 10px; border-radius: 99px; background: color-mix(in srgb, var(--text) 10%, transparent); overflow: hidden; }
 .progress i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--violet), var(--coral)); transition: width 1.3s cubic-bezier(.2,.8,.2,1) .2s; }
 .progress.in i { width: var(--v, 0%); }
 
 .donut {
   --p: 0; --target: 50; position: relative; width: 128px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
-  background: conic-gradient(var(--mint) calc(var(--p) * 1%), rgba(255,255,255,.1) 0); transition: --p 1.5s cubic-bezier(.2,.8,.2,1) .2s;
+  background: conic-gradient(var(--mint) calc(var(--p) * 1%), color-mix(in srgb, var(--text) 10%, transparent) 0); transition: --p 1.5s cubic-bezier(.2,.8,.2,1) .2s;
 }
 .donut::before { content: ""; position: absolute; inset: 13px; border-radius: 50%; background: var(--panel); }
 .donut b { position: relative; font: 800 1.35rem var(--display); }
@@ -118,7 +118,7 @@ body {
 
 .callout {
   --c: var(--violet); padding: 16px 18px; border-radius: 14px; border-left: 4px solid var(--c);
-  background: rgba(255,255,255,.05); color: var(--text);
+  background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text);
 }
 .callout.info { --c: var(--violet); } .callout.success { --c: var(--mint); }
 .callout.warn { --c: var(--amber); } .callout.danger { --c: var(--rose); }
@@ -127,7 +127,7 @@ body {
 .step { position: relative; counter-increment: s; padding: 0 0 22px 52px; }
 .step::before {
   content: counter(s); position: absolute; left: 0; top: 0; width: 34px; height: 34px; border-radius: 50%;
-  display: grid; place-items: center; font: 800 .95rem var(--display); color: #140c2b; background: linear-gradient(135deg, var(--mint), var(--violet));
+  display: grid; place-items: center; font: 800 .95rem var(--display); color: var(--on-btn, #140c2b); background: linear-gradient(135deg, var(--mint), var(--violet));
 }
 .step::after { content: ""; position: absolute; left: 16px; top: 40px; bottom: 6px; width: 2px; background: var(--line); }
 .step:last-child { padding-bottom: 0; } .step:last-child::after { display: none; }
@@ -148,7 +148,7 @@ summary { cursor: pointer; font-weight: 600; }
 details[open] summary { margin-bottom: 8px; color: var(--mint); }
 details[open] > :not(summary) { animation: fadein .35s ease; }
 
-.quote { margin: 0; padding: 18px 22px; border-radius: var(--r); background: rgba(255,255,255,.05); font: 600 1.1rem/1.4 var(--display); }
+.quote { margin: 0; padding: 18px 22px; border-radius: var(--r); background: color-mix(in srgb, var(--text) 5%, transparent); font: 600 1.1rem/1.4 var(--display); }
 .quote cite { display: block; margin-top: 8px; font: 400 .85rem var(--body); color: var(--muted); }
 
 svg.chart { width: 100%; height: auto; color: var(--muted); }
@@ -160,7 +160,7 @@ svg.chart { width: 100%; height: auto; color: var(--muted); }
 .rv.in { opacity: 1; transform: none; transition-delay: calc(var(--i, 0) * 80ms); }
 
 /* ---------- Loading + errors ---------- */
-.sk { height: 110px; border-radius: var(--r); background: linear-gradient(100deg, var(--panel) 30%, #2a2050 50%, var(--panel) 70%); background-size: 300% 100%; animation: shimmer 1.4s linear infinite; }
+.sk { height: 110px; border-radius: var(--r); background: linear-gradient(100deg, var(--panel) 30%, color-mix(in srgb, var(--panel) 85%, var(--text)) 50%, var(--panel) 70%); background-size: 300% 100%; animation: shimmer 1.4s linear infinite; }
 .sk.tall { height: 160px; }
 
 @keyframes shimmer { to { background-position: -300% 0; } }

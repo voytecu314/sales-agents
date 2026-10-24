@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const { STRINGS, LANGS } = require('./i18n');
-const { toPublicConfig, DEFAULT_PALETTE, HEX_RE } = require('./agentSchema');
+const { toPublicConfig, themeVars, DEFAULT_PALETTE, HEX_RE } = require('./agentSchema');
 
 const TEMPLATE = fs.readFileSync(path.join(__dirname, '..', 'views', 'agent.html'), 'utf8');
 
@@ -16,7 +16,15 @@ const jsonForScript = (obj) => JSON.stringify(obj)
 const color = (v, key) => (typeof v === 'string' && HEX_RE.test(v) ? v : DEFAULT_PALETTE[key]);
 
 function themeCss(p = {}) {
-  return `:root{--violet:${color(p.accent, 'accent')};--coral:${color(p.accent2, 'accent2')};--mint:${color(p.accent3, 'accent3')};--bg:${color(p.bg, 'bg')};--panel:${color(p.panel, 'panel')}}`;
+  const pal = Object.fromEntries(['accent', 'accent2', 'accent3', 'bg', 'panel'].map((k) => [k, color(p[k], k)]));
+  const { onBtn, onBubble, text, muted, scheme } = themeVars(pal); // readable text on page, buttons and bubbles, light or dark theme
+  return `:root{color-scheme:${scheme};--violet:${pal.accent};--coral:${pal.accent2};--mint:${pal.accent3};--bg:${pal.bg};--panel:${pal.panel};--text:${text};--muted:${muted};--on-btn:${onBtn};--on-bubble:${onBubble}}`;
+}
+
+// The logo if there is one, else the emoji (optional), else nothing.
+function brandMark(config) {
+  if (config.logoUrl) return `<img class="logo" id="brand-logo" src="${esc(config.logoUrl)}" alt="" height="44">`;
+  return config.emoji ? `<span id="emoji">${esc(config.emoji)}</span> ` : '';
 }
 
 function renderAgentPage(agent, { lang = 'en', baseUrl = '' } = {}) {
@@ -33,7 +41,8 @@ function renderAgentPage(agent, { lang = 'en', baseUrl = '' } = {}) {
     OG_URL: esc(`${baseUrl}/a/${config.slug}`),
     BG: esc(color(config.palette.bg, 'bg')),
     THEME_CSS: themeCss(config.palette).replace(/</g, ''),
-    EMOJI: esc(config.emoji),
+    BRAND_MARK: brandMark(config),
+    HEAD_IMAGE: config.logoUrl ? `<meta property="og:image" content="${esc(baseUrl + config.logoUrl)}">\n  <link rel="icon" href="${esc(config.logoUrl)}">` : '',
     NAME: esc(config.name),
     TAGLINE: esc(loc.tagline),
     PLACEHOLDER: esc(t.placeholder),

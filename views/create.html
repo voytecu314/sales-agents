@@ -28,20 +28,7 @@
 
     <!-- step 1: describe the company -->
     <form id="step-describe" class="panel-form" autocomplete="off">
-      <label><span data-i18n="fName">Company name *</span><input name="name" type="text" maxlength="80" required></label>
-      <label><span data-i18n="fOffer">What do you sell? *</span><textarea name="offer" rows="3" maxlength="2000" required></textarea></label>
-      <label><span data-i18n="fPricing">Offer and prices</span><textarea name="pricing" rows="4" maxlength="3000"></textarea></label>
-      <label><span data-i18n="fAudience">Target audience</span><textarea name="audience" rows="2" maxlength="1000"></textarea></label>
-      <div class="two">
-        <label><span data-i18n="fTone">Tone of voice</span><input name="tone" type="text" maxlength="300" data-i18n-ph="phTone"></label>
-        <label><span data-i18n="fLanguage">Main language of your customers</span>
-          <select name="language"><option value="auto" data-i18n="auto">Detect automatically</option><option value="en">English</option><option value="de">Deutsch</option><option value="pl">Polski</option></select>
-        </label>
-      </div>
-      <label><span data-i18n="fColors">Brand colors</span><input name="brandColors" type="text" maxlength="200" data-i18n-ph="phColors"></label>
-      <label><span data-i18n="fFaqs">FAQs</span><textarea name="faqs" rows="4" maxlength="3000"></textarea></label>
-      <label><span data-i18n="fRules">Rules and limits (what the agent must never promise or say)</span><textarea name="rules" rows="3" maxlength="2000"></textarea></label>
-      <label><span data-i18n="fContact">Contact options</span><textarea name="contact" rows="2" maxlength="1000"></textarea></label>
+%%DESCRIBE_FIELDS%%
       <button class="btn" type="submit" id="generate" data-i18n="generate">Generate my agent</button>
     </form>
 
@@ -60,6 +47,9 @@
       <p><span data-i18n="doneLink">Public link</span>: <a id="d-url" href="#" rel="noopener"></a></p>
       <p class="hint" data-i18n="doneKeyHint">This is your private owner key. It is shown only once and cannot be recovered. Save it now; you will need it to edit your agent.</p>
       <input id="d-key" type="text" readonly>
+      <p class="hint" id="d-expiry"></p>
+      <p class="hint" id="d-logo-note" hidden></p>
+      <p class="hint" id="d-color-note" hidden></p>
       <div class="actions-row">
         <button class="ghost" type="button" id="copy-url" data-i18n="copyUrl">Copy link</button>
         <button class="ghost" type="button" id="copy-key" data-i18n="copyKey">Copy key</button>

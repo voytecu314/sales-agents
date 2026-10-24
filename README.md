@@ -48,3 +48,26 @@ Provider fallbacks can take a while, so check the function max duration in the p
 - **Limits:** per IP and per agent rate limits, a daily message cap per agent, shared counters in MongoDB,
   a global kill switch (`KILL_SWITCH=true` or the `settings` document `{ key: "killSwitch", value: true }`).
 - **Moderation:** owner instructions are checked on publish and on every change (fixed patterns plus an LLM check).
+
+## Creating and editing agents (changes after phase 3)
+
+- **Describe your company:** `/create` starts with one big text box (default). The guided questions are optional
+  (open them to answer instead of, or in addition to, your text). The server merges both into the agent's instructions.
+- **Instructions stay on the server:** owners never see or edit the system prompt. They edit what they wrote
+  (description and answers) and the look and texts; when the description changes, the server rewrites the
+  instructions (max 10 times per agent and day).
+- **Logo instead of emoji:** upload a PNG, JPEG or WebP (shrunk in the browser to 256 px, stored in MongoDB, served from
+  `/api/agents/:slug/logo`). SVG is refused on purpose. The emoji is optional.
+- **Links that start a conversation:** `/a/<slug>?ask=What%20does%20a%20wedding%20cake%20cost%3F` opens the agent and
+  asks that question right away (max 300 characters). The edit page has a small link builder.
+- **Owner keys expire** (default 6 months, `OWNER_KEY_DAYS`). The agent keeps running; only editing needs a valid key.
+  Lost or expired keys are handled by the admin only:
+
+```bash
+node scripts/admin.js list
+node scripts/admin.js rotate-key acme-gmbh        # new key (lost key, or renewal after payment), prints the edit link
+node scripts/admin.js extend acme-gmbh 183        # same key, new expiry date
+node scripts/admin.js pause acme-gmbh | resume acme-gmbh | delete acme-gmbh
+node scripts/admin.js reports                     # visitor reports
+node scripts/admin.js kill on                     # global kill switch
+```

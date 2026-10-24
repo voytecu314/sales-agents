@@ -35,7 +35,7 @@ async function moderate(text, ask = askChain) {
 
 // Everything an owner wrote that visitors will read or that steers the agent.
 function textOf(agent) {
-  const parts = [agent.name, agent.systemPrompt];
+  const parts = [agent.name, agent.systemPrompt, ...Object.values(agent.inputs || {})];
   for (const l of Object.values(agent.locales || {})) {
     parts.push(l.tagline, l.welcome, ...(l.quickReplies || []).flatMap((q) => [q.label, q.send]));
   }

@@ -12,9 +12,12 @@ const EMAIL_RE = /^[^\s@<>"']{1,64}@[^\s@<>"']{1,200}\.[^\s@<>"']{2,}$/;
 const LIMITS = { name: 60, tagline: 100, welcome: 400, label: 40, send: 200, prompt: 12000, promptMin: 200 };
 
 /* ---------- colors ---------- */
+const toRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+const toHex = (rgb) => '#' + rgb.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+const mix = (a, b, t) => { const [x, y] = [toRgb(a), toRgb(b)]; return toHex(x.map((v, i) => v + (y[i] - v) * t)); };
+
 function luminance(hex) {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
-    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  const [r, g, b] = toRgb(hex).map((v) => v / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 function contrast(a, b) {
@@ -22,31 +25,78 @@ function contrast(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// What each color must satisfy so the chat stays readable on the fixed dark theme.
-const COLOR_RULES = {
-  bg: (c) => contrast(c, TEXT_COLOR) >= 9 || 'is too bright, the page needs a dark background',
-  panel: (c) => contrast(c, TEXT_COLOR) >= 7 || 'is too bright for the light text',
-  accent: (c, p) => (contrast(c, '#ffffff') >= 3 && contrast(c, DARK_TEXT) >= 3 && contrast(c, p.bg) >= 3) || 'must be a medium-bright color (not almost white or almost black)',
-  accent2: (c, p) => contrast(c, p.bg) >= 3 || 'is too dark to be seen on the background',
-  accent3: (c, p) => contrast(c, p.bg) >= 3 || 'is too dark to be seen on the background'
-};
+// Move a color toward `target` in small steps until `ok(color)` holds. Keeps the hue, so a brand color
+// that is a bit too dark or too bright is adjusted instead of being thrown away.
+function nudge(hex, target, ok) {
+  let c = hex;
+  for (let i = 0; i < 20 && !ok(c); i++) c = mix(c, target, 0.12);
+  return c;
+}
 
-function checkPalette(input, repair, errors) {
+const LIGHT_INK = TEXT_COLOR;  // text on dark backgrounds
+// (DARK_TEXT is the text on light backgrounds)
+
+// Text color for the page: dark or light, whichever reads best on every given background.
+function bestInk(backgrounds) {
+  const score = (t) => Math.min(...backgrounds.map((c) => contrast(t, c)));
+  return score(DARK_TEXT) > score(LIGHT_INK) ? DARK_TEXT : LIGHT_INK;
+}
+const minContrast = (t, backgrounds) => Math.min(...backgrounds.map((c) => contrast(t, c)));
+
+// Owners choose their colors freely: light or dark backgrounds are both fine. The text color follows the
+// background automatically. Only combinations that cannot be read (for example a white page with a black
+// panel, or accent colors that vanish on the background) are adjusted, in small steps that keep the hue.
+function checkPalette(input, repair, errors, notes) {
   const src = input && typeof input === 'object' ? input : {};
-  const out = {};
-  const ref = { ...DEFAULT_PALETTE }; // colors that passed so far; later colors are checked against these
-  for (const key of ['bg', 'panel', 'accent', 'accent2', 'accent3']) { // bg first
-    let v = typeof src[key] === 'string' ? src[key].trim().toLowerCase() : '';
-    const problem = !HEX_RE.test(v) ? 'must be a hex color like #8b5cf6' : COLOR_RULES[key](v, ref);
-    if (problem !== true) {
-      if (repair) v = DEFAULT_PALETTE[key];
-      else errors.push(`palette.${key} ${problem}`);
-    } else {
-      ref[key] = v;
-    }
-    out[key] = v;
+  const given = {};
+  const get = (key) => {
+    const v = typeof src[key] === 'string' ? src[key].trim().toLowerCase() : '';
+    if (HEX_RE.test(v)) { given[key] = v; return v; }
+    if (!repair) errors.push(`palette.${key} must be a hex color like #8b5cf6`);
+    given[key] = null;
+    return DEFAULT_PALETTE[key];
+  };
+
+  let bg = get('bg');
+  let panel = get('panel');
+  const accents = { accent: get('accent'), accent2: get('accent2'), accent3: get('accent3') };
+
+  // 1) text must be readable on the background and on the panels
+  let ink = bestInk([bg, panel]);
+  const readable = (min) => minContrast(ink, [bg, panel]) >= min;
+  for (let i = 0; i < 10 && !readable(7); i++) { panel = mix(panel, bg, 0.3); ink = bestInk([bg, panel]); }          // panel far from bg (white page, black panel): pull it closer
+  for (let i = 0; i < 24 && !readable(4.5); i++) {                                                                  // bg itself is mid-tone: push it to an extreme
+    bg = mix(bg, ink === LIGHT_INK ? '#000000' : '#ffffff', 0.1); panel = mix(panel, bg, 0.5); ink = bestInk([bg, panel]);
   }
+
+  // 2) accent colors must be visible on the background
+  const out = { bg, panel };
+  for (const key of ['accent', 'accent2', 'accent3']) {
+    out[key] = nudge(accents[key], ink === DARK_TEXT ? '#000000' : '#ffffff', (x) => contrast(x, bg) >= 3);
+  }
+
+  const changed = Object.keys(out).some((k) => given[k] && out[k] !== given[k]);
+  if (changed) notes.push('palette');
   return out;
+}
+
+// Text color on accent surfaces: dark or white, whichever reads better on every color of the gradient.
+function bestText(colors) {
+  const score = (t) => Math.min(...colors.map((c) => contrast(t, c)));
+  return score(DARK_TEXT) >= score('#ffffff') ? DARK_TEXT : '#ffffff';
+}
+
+// Everything the page derives from the palette: text colors for buttons, bubbles and the page itself.
+function themeVars(p) {
+  const text = bestInk([p.bg, p.panel]);
+  let muted = mix(text, p.bg, 0.32);
+  for (let i = 0; i < 10 && contrast(muted, p.bg) < 4.5; i++) muted = mix(muted, text, 0.25);
+  return {
+    onBtn: bestText([p.accent3, p.accent]),                         // gradient buttons: accent3 -> accent
+    onBubble: bestText([p.accent, mix(p.accent, '#000000', 0.2)]),  // the visitor's message bubble
+    text, muted,
+    scheme: text === DARK_TEXT ? 'light' : 'dark' // dark text means a light page
+  };
 }
 
 /* ---------- text ---------- */
@@ -64,20 +114,22 @@ function text(value, { max, min = 0, multiline = false, path, repair, errors }) 
 
 const EMOJI_RE = /^\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*$/u;
 
-function validateAgent(input, { repair = false } = {}) {
+// `prompt: true` is only used for LLM drafts. Owners never send or see the system prompt.
+function validateAgent(input, { repair = false, prompt = false } = {}) {
   const errors = [];
+  const notes = [];
   const src = input && typeof input === 'object' ? input : {};
   const o = (path, max, extra = {}) => ({ max, path, repair, errors, ...extra });
 
   const value = {
     name: text(src.name, o('name', LIMITS.name, { min: 2 })),
-    emoji: '💬',
+    emoji: '',
     language: LANGS.includes(src.language) ? src.language : 'en',
-    palette: checkPalette(src.palette, repair, errors),
+    palette: checkPalette(src.palette, repair, errors, notes),
     locales: {},
-    notifyEmail: '',
-    systemPrompt: text(src.systemPrompt, o('systemPrompt', LIMITS.prompt, { min: LIMITS.promptMin, multiline: true }))
+    notifyEmail: ''
   };
+  if (prompt) value.systemPrompt = text(src.systemPrompt, o('systemPrompt', LIMITS.prompt, { min: LIMITS.promptMin, multiline: true }));
 
   const email = typeof src.notifyEmail === 'string' ? src.notifyEmail.trim().toLowerCase() : '';
   if (email) {
@@ -85,9 +137,9 @@ function validateAgent(input, { repair = false } = {}) {
     else errors.push('notifyEmail is not a valid e-mail address');
   }
 
-  const emoji = typeof src.emoji === 'string' ? src.emoji.trim() : '';
+  const emoji = typeof src.emoji === 'string' ? src.emoji.trim() : ''; // optional
   if (EMOJI_RE.test(emoji) && emoji.length <= 16) value.emoji = emoji;
-  else if (!repair && emoji) errors.push('emoji must be a single emoji');
+  else if (!repair && emoji) errors.push('emoji must be a single emoji (or leave it empty)');
 
   for (const lang of LANGS) {
     const l = src.locales?.[lang];
@@ -105,19 +157,20 @@ function validateAgent(input, { repair = false } = {}) {
     };
   }
 
-  return { value, errors };
+  return { value, errors, notes };
 }
 
-// What visitors may see. Never the system prompt, status, plan or token hash.
+// What visitors may see. Never the system prompt, the owner's inputs, status, plan or token hash.
 function toPublicConfig(agent) {
   return {
     slug: agent.slug,
     name: agent.name,
-    emoji: agent.emoji,
+    emoji: agent.emoji || '',
+    logoUrl: agent.hasLogo ? `/api/agents/${agent.slug}/logo?v=${agent.logoVersion || 0}` : null,
     language: agent.language,
     palette: { ...DEFAULT_PALETTE, ...(agent.palette || {}) },
     locales: agent.locales
   };
 }
 
-module.exports = { validateAgent, toPublicConfig, DEFAULT_PALETTE, contrast, HEX_RE, EMAIL_RE };
+module.exports = { validateAgent, toPublicConfig, themeVars, DEFAULT_PALETTE, contrast, HEX_RE, EMAIL_RE };

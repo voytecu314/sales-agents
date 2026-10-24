@@ -1,0 +1,24 @@
+      <label class="big"><span data-i18n="dTitle">Describe your company</span>
+        <textarea name="description" rows="9" maxlength="8000" data-i18n-ph="dPlaceholder"></textarea>
+      </label>
+      <p class="hint" data-i18n="dHint">Write freely: what you sell, prices, who your customers are, how you talk to them, frequent questions, what the agent must never promise, how to reach you. The more you write, the better your agent.</p>
+
+      <details class="guided" id="guided">
+        <summary data-i18n="gSummary">Optional: answer guided questions (alone or in addition to your text)</summary>
+        <div class="guided-body">
+          <label><span data-i18n="fName">Company name</span><input name="name" type="text" maxlength="80"></label>
+          <label><span data-i18n="fOffer">What do you sell?</span><textarea name="offer" rows="3" maxlength="2000"></textarea></label>
+          <label><span data-i18n="fPricing">Offer and prices</span><textarea name="pricing" rows="4" maxlength="3000"></textarea></label>
+          <label><span data-i18n="fAudience">Target audience</span><textarea name="audience" rows="2" maxlength="1000"></textarea></label>
+          <div class="two">
+            <label><span data-i18n="fTone">Tone of voice</span><input name="tone" type="text" maxlength="300" data-i18n-ph="phTone"></label>
+            <label><span data-i18n="fLanguage">Main language of your customers</span>
+              <select name="language"><option value="auto" data-i18n="auto">Detect automatically</option><option value="en">English</option><option value="de">Deutsch</option><option value="pl">Polski</option></select>
+            </label>
+          </div>
+          <label><span data-i18n="fColors">Brand colors</span><input name="brandColors" type="text" maxlength="200" data-i18n-ph="phColors"></label>
+          <label><span data-i18n="fFaqs">FAQs</span><textarea name="faqs" rows="4" maxlength="3000"></textarea></label>
+          <label><span data-i18n="fRules">Rules and limits (what the agent must never promise or say)</span><textarea name="rules" rows="3" maxlength="2000"></textarea></label>
+          <label><span data-i18n="fContact">Contact options</span><textarea name="contact" rows="2" maxlength="1000"></textarea></label>
+        </div>
+      </details>

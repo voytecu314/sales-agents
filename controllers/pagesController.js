@@ -7,8 +7,10 @@ const { renderAgentPage, esc } = require('../services/renderPage');
 
 const view = (name) => fs.readFileSync(path.join(__dirname, '..', 'views', name), 'utf8');
 const REVIEW_FORM = view('review-form.html'); // the editable agent form, shared by /create and /edit
-const CREATE_HTML = view('create.html').replace('%%REVIEW_FORM%%', REVIEW_FORM);
-const EDIT_HTML = view('edit.html').replace('%%REVIEW_FORM%%', REVIEW_FORM);
+const DESCRIBE_FIELDS = view('describe-fields.html'); // company description: free text + guided questions
+const fill = (html) => html.replace('%%REVIEW_FORM%%', REVIEW_FORM).replace('%%DESCRIBE_FIELDS%%', DESCRIBE_FIELDS);
+const CREATE_HTML = fill(view('create.html'));
+const EDIT_HTML = fill(view('edit.html'));
 
 const baseUrl = (req) => (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
 
@@ -18,7 +20,8 @@ function createPage(req, res) {
 
 // GET /edit/:slug : owner page. The owner key is in the URL fragment (#...), which is never sent to the server.
 function editPage(req, res) {
-  res.type('html').send(EDIT_HTML);
+  const support = esc(process.env.SUPPORT_EMAIL || '');
+  res.type('html').send(EDIT_HTML.replace(/%%SUPPORT_EMAIL%%/g, support));
 }
 
 // GET /a/:slug : same shell for everyone, filled with this company's branding
