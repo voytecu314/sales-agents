@@ -69,5 +69,5 @@ node scripts/admin.js rotate-key acme-gmbh        # new key (lost key, or renewa
 node scripts/admin.js extend acme-gmbh 183        # same key, new expiry date
 node scripts/admin.js pause acme-gmbh | resume acme-gmbh | delete acme-gmbh
 node scripts/admin.js reports                     # visitor reports
-node scripts/admin.js kill on                     # global kill switch
+node scripts/admin.js kill on                     # global kill switch Setting by hand in Atlas: in the settings collection, create or edit a document { key: "killSwitch", value: true }
 ```
