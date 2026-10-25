@@ -1,0 +1,87 @@
+/* Urban Web page: brand colors, header with the logo on the top right, light look.
+ * Loaded after the theme <style> of the page (see views/agent.html), so these values have the last word. */
+
+:root {
+  --primary: rgb(13, 110, 253);
+  --secondary: rgb(75, 142, 241);
+  --grey: rgb(108, 117, 125);
+  --ink: rgb(33, 37, 41);
+  --surface: rgb(248, 249, 250);
+  --violet: var(--primary);   /* the shared kit's accent colors, mapped to the brand */
+  --coral: var(--secondary);
+  --mint: var(--primary);
+  --bg: #fff;
+  --panel: var(--surface);
+  --text: var(--ink);
+  --muted: var(--grey);
+  --on-btn: #fff;
+  --on-bubble: #fff;
+  color-scheme: light;
+}
+
+body { background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 7%, #fff) 0, #fff 340px) no-repeat, #fff; }
+
+/* Header: tagline on the left, logo on the top right, language and "new conversation" below */
+.top { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "brand logo" "actions actions"; align-items: center; gap: 14px 20px; margin-bottom: 4px; }
+.top > div:first-child { grid-area: brand; }
+.top .actions { grid-area: actions; justify-content: flex-end; }
+.top .uw-logo { grid-area: logo; justify-self: end; }
+.top h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* "Urban Web" is in the logo; kept for screen readers */
+.top p#tagline { font-size: 1.05rem; color: var(--ink); font-weight: 500; max-width: 30ch; }
+
+/* Controls */
+.composer { box-shadow: 0 8px 30px rgba(33, 37, 41, .12); background: #fff; border-color: color-mix(in srgb, var(--grey) 35%, transparent); }
+.composer:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent), 0 8px 30px rgba(33, 37, 41, .12); }
+.composer button, .btn { background: var(--primary); }
+.composer button:hover, .btn:hover { background: color-mix(in srgb, var(--primary) 88%, #000); filter: none; }
+.step::before { background: var(--primary); }
+.you { background: var(--primary); }
+.price-card.featured { box-shadow: 0 0 0 1px var(--primary), 0 12px 40px color-mix(in srgb, var(--primary) 12%, transparent); }
+.hero { background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 14%, #fff), color-mix(in srgb, var(--secondary) 10%, #fff)); }
+.badge.warn { color: #8a5a00; background: rgba(255, 193, 7, .2); }
+.badge.bad { color: #a61e2d; background: rgba(220, 53, 69, .12); }
+.callout.warn { --c: #ffc107; } .callout.danger { --c: #dc3545; }
+:focus-visible { outline-color: var(--primary); }
+
+/* ---------- Urban Web logo (animated globe), drawn with near-black lines for the white page ---------- */
+:root { --logo-line: #111; --logo-inner: #fff; } /* letters, orbit and satellites dark; the globe's outline and the lines inside it white */
+.uw-logo, .uw-logo * { box-sizing: border-box; }
+.uw-logo { display: inline-flex; align-items: center; gap: 3px; color: var(--logo-line); text-decoration: none; font-family: Arial, sans-serif; }
+.uw-logo h3 { margin: 0; font-size: 30px; line-height: 1; font-weight: 400; white-space: nowrap; color: var(--logo-line); }
+
+#globe {
+  position: relative; flex: 0 0 60px; width: 60px; height: 60px; margin: 0 2px;
+  border: 3px solid var(--logo-inner); border-radius: 50%;
+  background: linear-gradient(90deg, #0d6efd 0%, #0dcaf0 50%, #0d6efd 100%);
+  background-size: 200% 100%; background-position: 0% 50%;
+  transform-style: preserve-3d; animation: circle-colour 4s ease-in-out infinite alternate;
+}
+#globe .inner, #globe .outer { position: absolute; border: 3px solid var(--logo-inner); border-radius: 50%; transition: transform 1s; }
+#globe .inner { inset: -3px; width: auto; height: auto; }
+#globe .inner:nth-child(1) { transform: rotateY(41deg); animation: rotation1 3s ease-in-out infinite alternate; }
+#globe .inner:nth-child(2) { transform: rotateY(-45deg); animation: rotation2 3s ease-in-out infinite alternate; }
+#globe .inner:nth-child(3) { transform: rotateY(70deg); animation: rotation3 3s ease-in-out infinite alternate; }
+#globe .inner:nth-child(4) { transform: rotateY(-70deg); animation: rotation4 3s ease-in-out infinite alternate; }
+#globe .outer { border-color: var(--logo-line); width: 162%; height: 100%; left: -29%; top: 0; border-width: 4px; transform: rotateX(45deg) rotateY(-30deg); }
+#globe .satelite { position: absolute; width: 9px; height: 9px; border: 2px solid var(--logo-line); border-radius: 50%; background: var(--logo-line); }
+#globe .satelite:nth-child(1) { left: -4px; top: 28px; }
+#globe .satelite:nth-child(2) { right: -6px; top: 13px; }
+#globe hr { position: absolute; left: 0; width: 100%; top: 50%; margin: 0; border: 0; border-top: 1px solid var(--logo-inner); }
+
+@keyframes rotation1 { to { transform: rotateY(70deg); } }
+@keyframes rotation2 { to { transform: rotateY(-70deg); } }
+@keyframes rotation3 { to { transform: rotateY(41deg); } }
+@keyframes rotation4 { to { transform: rotateY(-45deg); } }
+@keyframes circle-colour { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+
+@media (prefers-reduced-motion: reduce) { #globe, #globe .inner { animation: none; } }
+
+@media (max-width: 480px) {
+  .uw-logo h3 { font-size: 24px; }
+  #globe { flex-basis: 50px; width: 50px; height: 50px; transform: scale(.85); margin: 0 -2px; }
+}
+@media (max-width: 560px) {
+  .top { grid-template-columns: 1fr; grid-template-areas: "logo" "brand" "actions"; }
+  .top .uw-logo { justify-self: end; }
+  .top .actions { justify-content: flex-start; }
+}

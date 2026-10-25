@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/chat.css">
   <style>%%THEME_CSS%%</style>
+  %%HEAD_EXTRA%%
 </head>
 <body>
   <main class="shell">
@@ -33,6 +34,7 @@
         </select>
         <button id="reset" type="button" class="ghost">%%NEW_CHAT%%</button>
       </div>
+      %%TOP_RIGHT%%
     </header>
 
     <section id="feed" class="feed" aria-live="polite"></section>
@@ -42,7 +44,7 @@
       <button id="send" type="submit">%%SEND%%</button>
     </form>
 
-    <footer class="foot"><span id="foot-ai">%%AI_LABEL%%</span> · <button id="report" type="button" class="linklike">%%REPORT%%</button></footer>
+    <footer class="foot"><span id="foot-ai">%%AI_LABEL%%</span>%%REPORT_BTN%%</footer>
   </main>
 
   <!-- public config of this agent: branding and texts only, never the system prompt -->

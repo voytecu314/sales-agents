@@ -27,7 +27,8 @@ function brandMark(config) {
   return config.emoji ? `<span id="emoji">${esc(config.emoji)}</span> ` : '';
 }
 
-function renderAgentPage(agent, { lang = 'en', baseUrl = '' } = {}) {
+// `site` (optional) turns the shared page into a special one (the Urban Web home page): see services/urbanWeb.js#siteOptions.
+function renderAgentPage(agent, { lang = 'en', baseUrl = '', site = {} } = {}) {
   if (!LANGS.includes(lang)) lang = 'en';
   const config = toPublicConfig(agent);
   const loc = config.locales?.[lang] || config.locales?.en || { tagline: '', welcome: '', quickReplies: [] };
@@ -38,7 +39,7 @@ function renderAgentPage(agent, { lang = 'en', baseUrl = '' } = {}) {
     LANG: esc(lang),
     TITLE: esc(title),
     DESCRIPTION: esc(loc.welcome || loc.tagline),
-    OG_URL: esc(`${baseUrl}/a/${config.slug}`),
+    OG_URL: esc(site.ogUrl || `${baseUrl}/a/${config.slug}`),
     BG: esc(color(config.palette.bg, 'bg')),
     THEME_CSS: themeCss(config.palette).replace(/</g, ''),
     BRAND_MARK: brandMark(config),
@@ -51,8 +52,10 @@ function renderAgentPage(agent, { lang = 'en', baseUrl = '' } = {}) {
     NEW_CHAT: esc(t.newChat),
     LANG_LABEL: esc(t.langLabel),
     AI_LABEL: esc(t.aiLabel),
-    REPORT: esc(t.report),
-    CONFIG_JSON: jsonForScript({ ...config, strings: STRINGS, defaultLang: lang })
+    HEAD_EXTRA: site.headExtra || '',
+    TOP_RIGHT: site.topRight || '',
+    REPORT_BTN: site.noReport ? '' : ` · <button id="report" type="button" class="linklike">${esc(t.report)}</button>`,
+    CONFIG_JSON: jsonForScript({ ...config, ...(site.endpoints || {}), strings: STRINGS, defaultLang: lang })
   };
   return TEMPLATE.replace(/%%([A-Z_]+)%%/g, (m, k) => (k in values ? values[k] : m));
 }

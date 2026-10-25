@@ -12,6 +12,7 @@ const Logo = require('../models/Logo');
 const Report = require('../models/Report');
 const Setting = require('../models/Setting');
 const { newOwnerKey, expiresAtOf, keyDays } = require('../services/ownerKey');
+const { DEMO_SLUG } = require('../services/demoLead');
 
 const HELP = `Commands:
   list                         all agents (slug, status, key expiry, leads)
@@ -20,6 +21,7 @@ const HELP = `Commands:
   extend <slug> [days]         move the expiry of the current key (default ${keyDays()} days from now), key stays the same
   pause <slug> | resume <slug> switch an agent off / on
   delete <slug>                delete agent, logo and leads
+  leads [slug] [count]         contact requests (default: the Urban Web site itself, newest first, 20)
   reports [slug]               visitor reports
   kill on|off                  global kill switch for all LLM calls (reaches the site within ~15 s)
 `;
@@ -45,7 +47,7 @@ async function main() {
       const leads = await Lead.countDocuments({ slug: a.slug });
       console.log(`${a.slug.padEnd(32)} ${a.status.padEnd(7)} key until ${fmt(expiresAtOf(a))}  leads ${leads}  ${a.notifyEmail || ''}`);
     }
-    console.log(`${agents.length} agents`);
+    console.log(`${agents.length} agents; Urban Web site leads: ${await Lead.countDocuments({ slug: DEMO_SLUG })}`);
   } else if (cmd === 'show' && slug) {
     const a = await Agent.findOne({ slug }).lean();
     if (!a) throw new Error(`No agent "${slug}"`);
@@ -68,6 +70,10 @@ async function main() {
   } else if (cmd === 'delete' && slug) {
     await Promise.all([Agent.deleteOne({ slug }), Lead.deleteMany({ slug }), Logo.deleteOne({ slug })]);
     console.log(`${slug} deleted`);
+  } else if (cmd === 'leads') {
+    const ls = await Lead.find({ slug: slug || DEMO_SLUG }).sort({ createdAt: -1 }).limit(Number(arg) || 20).lean();
+    for (const l of ls) console.log(`${new Date(l.createdAt).toISOString().replace('T', ' ').slice(0, 16)}  ${l.name} <${l.email}>  [${l.lang}] mailed: ${l.emailed ? 'yes' : 'no'}\n    ${(l.message || '-').replace(/\s+/g, ' ')}`);
+    console.log(`${ls.length} leads (${slug || DEMO_SLUG})`);
   } else if (cmd === 'reports') {
     const rs = await Report.find(slug ? { slug } : {}).sort({ createdAt: -1 }).limit(50).lean();
     for (const r of rs) console.log(`${fmt(r.createdAt)}  ${r.slug}  ${r.reason || ''}`);

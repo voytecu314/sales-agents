@@ -1,18 +1,29 @@
-// Builds the system prompt on the server. The client never supplies it.
-// Phase 1: single company prompt from a text file. Phase 2 loads it per agent from the DB.
+// Builds the system prompt of the Urban Web assistant on the server. The client never supplies it.
+// Company knowledge comes from a text file (default prompts/urban_web.txt, override with COMPANY_PROMPT_FILE);
+// the platform rules, UI rules, link rules and language hint are the same ones every agent gets.
 const fs = require('fs');
 const path = require('path');
-const { UI_RULES } = require('../prompts/uiRules');
+const { buildAgentPrompt } = require('./agentPrompt');
 
-const COMPANY_FILE = process.env.COMPANY_PROMPT_FILE || path.join(__dirname, '..', 'prompts', 'company.txt');
+const COMPANY_FILE = process.env.COMPANY_PROMPT_FILE || path.join(__dirname, '..', 'prompts', 'urban_web.txt');
 
 let companyPrompt;
 try {
-  companyPrompt = fs.readFileSync(COMPANY_FILE, 'utf8');
+  companyPrompt = fs.readFileSync(COMPANY_FILE, 'utf8').trim();
 } catch {
   throw new Error(`Company prompt not found: ${COMPANY_FILE}\nSave your company system prompt there and restart.`);
 }
 
-const SYSTEM_PROMPT = companyPrompt.trim() + '\n' + UI_RULES;
+// The contact form needs MongoDB (requests are stored there). Without MONGODB_URI the assistant does not offer it.
+const leadEnabled = () => Boolean(process.env.MONGODB_URI);
 
-module.exports = { SYSTEM_PROMPT };
+const cache = new Map();
+function promptFor(lang) {
+  const key = `${lang || ''}|${leadEnabled()}`;
+  if (!cache.has(key)) {
+    cache.set(key, buildAgentPrompt({ systemPrompt: companyPrompt }, lang, { leads: leadEnabled() }));
+  }
+  return cache.get(key);
+}
+
+module.exports = { COMPANY_PROMPT: companyPrompt, promptFor, leadEnabled };

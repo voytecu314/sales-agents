@@ -13,11 +13,20 @@ npm run dev            # http://localhost:3000
 
 ## How it works
 
-- `prompts/company.txt` is the company system prompt, `prompts/uiRules.js` the shared HTML component rules.
+- `prompts/urban_web.txt` is the Urban Web system prompt (the assistant at `/`), `prompts/uiRules.js` the shared HTML component rules.
   The server builds the system prompt itself; the browser can never send or change it.
 - The browser keeps the whole conversation and sends it with every `POST /api/chat { messages }`.
   The server accepts only `user` / `assistant` turns, validates and caps them, and keeps no state.
 - `services/llm.js` tries Groq, then OpenRouter, then Requesty.
+
+## Urban Web assistant (`/`)
+
+- The home page is the Urban Web sales assistant. It uses the same shell as `/a/:slug`, filled from `services/urbanWeb.js`
+  (texts in en/de/pl, brand colors) and styled by `public/urbanweb.css` (logo top right). `/?ask=<question>` starts with a question.
+- Chat: `POST /api/chat`, no database needed. The system prompt = `prompts/urban_web.txt` + platform rules + UI rules + link rules.
+  Links survive only if the URL appears in `prompts/urban_web.txt`.
+- Contact form: `POST /api/lead` stores the request in MongoDB (as slug `_urban-web`) and e-mails it to `LEAD_NOTIFY_EMAIL`
+  (fallback `ADMIN_EMAIL`) via SMTP. Without `MONGODB_URI` the assistant does not offer the form.
 
 ## Multi-tenant agents
 
@@ -68,6 +77,7 @@ node scripts/admin.js list
 node scripts/admin.js rotate-key acme-gmbh        # new key (lost key, or renewal after payment), prints the edit link
 node scripts/admin.js extend acme-gmbh 183        # same key, new expiry date
 node scripts/admin.js pause acme-gmbh | resume acme-gmbh | delete acme-gmbh
+node scripts/admin.js leads                       # contact requests from the Urban Web page (or: leads <slug> [count])
 node scripts/admin.js reports                     # visitor reports
 node scripts/admin.js kill on                     # global kill switch Setting by hand in Atlas: in the settings collection, create or edit a document { key: "killSwitch", value: true }
 ```

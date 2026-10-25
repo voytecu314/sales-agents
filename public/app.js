@@ -18,7 +18,9 @@ let busy = false;
 const LANGS = ['en', 'de', 'pl'];
 const cfgEl = document.getElementById('agent-config');
 const AGENT = cfgEl ? JSON.parse(cfgEl.textContent) : null;
-const CHAT_URL = AGENT ? `/api/agents/${encodeURIComponent(AGENT.slug)}/chat` : '/api/chat';
+// The Urban Web page brings its own endpoints (chatUrl, leadUrl); stored agents use /api/agents/:slug/...
+const CHAT_URL = AGENT ? (AGENT.chatUrl || `/api/agents/${encodeURIComponent(AGENT.slug)}/chat`) : '/api/chat';
+const LEAD_URL = AGENT ? (AGENT.leadUrl || `/api/agents/${encodeURIComponent(AGENT.slug)}/lead`) : null;
 let lang = AGENT ? pickLang() : null;
 
 // Language: ?lang=de  >  the visitor's earlier choice  >  browser language  >  English
@@ -46,15 +48,15 @@ function applyLang() {
   document.getElementById('reset').textContent = t('newChat');
   document.getElementById('lang').setAttribute('aria-label', t('langLabel'));
   document.getElementById('foot-ai').textContent = t('aiLabel');
-  const rb = document.getElementById('report');
-  rb.textContent = t(rb.dataset.sent ? 'reported' : 'report');
+  const rb = document.getElementById('report'); // absent on the Urban Web page
+  if (rb) rb.textContent = t(rb.dataset.sent ? 'reported' : 'report');
   document.getElementById('lang').value = lang;
   // swap the welcome message only while the conversation has not started
   if (!history.length && !feed.querySelector('.you')) { feed.innerHTML = ''; showWelcome(); }
 }
 
 if (AGENT) {
-  document.getElementById('report').addEventListener('click', async (e) => {
+  document.getElementById('report')?.addEventListener('click', async (e) => {
     const b = e.currentTarget;
     if (b.dataset.sent) return;
     try {
@@ -125,7 +127,7 @@ async function sendLead(f) {
   f.nextElementSibling?.classList.contains('lead-error') && f.nextElementSibling.remove();
   lockForm(f, true);
   try {
-    const res = await fetch(`/api/agents/${encodeURIComponent(AGENT.slug)}/lead`, {
+    const res = await fetch(LEAD_URL, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
     });
     const data = await res.json().catch(() => ({}));

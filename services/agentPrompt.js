@@ -6,9 +6,10 @@ const { GUARDRAILS } = require('../prompts/guardrails');
 const { LINK_RULES, LEAD_RULES } = require('../prompts/extraRules');
 const { LANG_NAMES } = require('./i18n');
 
-function buildAgentPrompt(agent, lang) {
+// `leads: false` leaves the contact form out (the Urban Web page does that when it has no database).
+function buildAgentPrompt(agent, lang, { leads = true } = {}) {
   let prompt = String(agent.systemPrompt).trim() + '\n' + GUARDRAILS + '\n' + UI_RULES + '\n' + LINK_RULES;
-  if (agent.notifyEmail) prompt += '\n' + LEAD_RULES;
+  if (leads) prompt += '\n' + LEAD_RULES; // requests are always stored; mail goes out only to a confirmed notifyEmail
   if (LANG_NAMES[lang]) {
     prompt += `\n\nINTERFACE LANGUAGE: the customer chose ${LANG_NAMES[lang]} in the page. When the customer's language is unclear (a very short message, a button click), reply in ${LANG_NAMES[lang]}. Otherwise follow the customer's own language.`;
   }

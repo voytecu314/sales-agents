@@ -2,13 +2,9 @@ const Agent = require('../models/Agent');
 const Lead = require('../models/Lead');
 const Report = require('../models/Report');
 const { loadAgent, baseUrl } = require('./agentsController');
-const { EMAIL_RE } = require('../services/agentSchema');
-const { LANGS } = require('../services/i18n');
+const { parseLead, line } = require('../services/leadInput');
 const { hit, dailyKey } = require('../services/counters');
 const { sendLead, sendMail } = require('../services/mailer');
-
-const CONTROL = /[\u0000-\u001F\u007F]/g;
-const line = (v, max) => String(v ?? '').replace(CONTROL, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 
 // POST /api/agents/:slug/lead   { name, email, message, consent, lang, website }
 // Called by the page itself (not by the AI), so contact data never goes through the LLM providers.
@@ -18,23 +14,18 @@ async function lead(req, res) {
     if (!cached) return;
     // Read fresh (not from the 60 s cache): whether an address is confirmed decides if we send mail.
     const agent = await Agent.findOne({ slug: cached.slug }).lean();
-    if (!agent || agent.status !== 'active' || !agent.notifyEmail) return res.status(404).json({ error: 'Contact requests are not available for this assistant.' });
+    if (!agent || agent.status !== 'active') return res.status(404).json({ error: 'Contact requests are not available for this assistant.' });
 
-    const b = req.body || {};
-    if (b.website) return res.json({ ok: true }); // honeypot field filled in: a bot. Pretend success, store nothing.
-
-    const name = line(b.name, 100);
-    const email = line(b.email, 254).toLowerCase();
-    const message = String(b.message ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim().slice(0, 1000);
-    if (!name || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter your name and a valid e-mail address.' });
-    if (b.consent !== true && b.consent !== 'yes') return res.status(400).json({ error: 'Please agree that the company may contact you.' });
+    const parsed = parseLead(req.body);
+    if (parsed.honeypot) return res.json({ ok: true }); // a bot: pretend success, store nothing
+    if (parsed.error) return res.status(400).json({ error: parsed.error });
 
     const cap = Number(process.env.LEAD_DAILY_CAP) || 50;
     if (await hit(dailyKey('lead', agent.slug), 2 * 86_400_000) > cap) {
       return res.status(429).json({ error: 'Too many requests for this assistant today. Please contact the company directly.' });
     }
 
-    const doc = await Lead.create({ slug: agent.slug, name, email, message, lang: LANGS.includes(b.lang) ? b.lang : 'en' });
+    const doc = await Lead.create({ slug: agent.slug, ...parsed.value });
 
     if (agent.notifyEmailVerified) { // only confirmed addresses receive mail
       try {

@@ -12,6 +12,7 @@ const validateMessages = require('../utils/validateMessages');
 const { buildLinkPolicy } = require('../services/linkPolicy');
 const { moderate, textOf } = require('../services/moderation');
 const { sendVerification } = require('../services/mailer');
+const { suggestEmail } = require('../services/emailSuggest');
 const { hit, dailyKey } = require('../services/counters');
 
 const DAILY_CAP = () => Number(process.env.DAILY_MESSAGE_CAP) || 200; // messages per agent and day
@@ -27,7 +28,8 @@ async function generate(req, res) {
     const { systemPrompt, ...branding } = await generateDraft(input.value);
     const draftId = crypto.randomBytes(24).toString('base64url');
     await Draft.create({ draftId, systemPrompt, inputs: input.value, expireAt: new Date(Date.now() + 2 * 3_600_000) });
-    res.json({ draftId, agent: branding });
+    const suggestedNotifyEmail = suggestEmail(input.value); // prefilled in the review form; the owner confirms or clears it
+    res.json({ draftId, agent: { ...branding, notifyEmail: suggestedNotifyEmail }, suggestedNotifyEmail });
   } catch (err) {
     console.error('Generate failed:', err.message);
     res.status(502).json({ error: 'Could not generate the agent right now. Please try again.' });

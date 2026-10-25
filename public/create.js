@@ -18,6 +18,7 @@ $('step-describe').addEventListener('submit', async (e) => {
     const data = await request('POST', '/api/agents/generate', { company: getInputs(e.target) });
     draftId = data.draftId; // the instructions stay on the server; the browser only holds this id
     fill(data.agent);
+    $('r-notify-suggest').hidden = !data.suggestedNotifyEmail; // visible hint: the address was taken from the description
     show('step-review');
   } catch (err) {
     showError(err.message);
@@ -27,6 +28,7 @@ $('step-describe').addEventListener('submit', async (e) => {
 });
 
 /* step 2: review and publish */
+$('r-notify').addEventListener('input', () => { $('r-notify-suggest').hidden = true; });
 $('back').addEventListener('click', () => { showError(''); show('step-describe'); });
 
 $('step-review').addEventListener('submit', async (e) => {

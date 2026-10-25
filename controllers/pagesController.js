@@ -4,6 +4,7 @@ const { LANGS } = require('../services/i18n');
 const { isValidSlug } = require('../services/slug');
 const { getAgent } = require('../services/agentCache');
 const { renderAgentPage, esc } = require('../services/renderPage');
+const { URBAN_WEB, siteOptions } = require('../services/urbanWeb');
 
 const view = (name) => fs.readFileSync(path.join(__dirname, '..', 'views', name), 'utf8');
 const REVIEW_FORM = view('review-form.html'); // the editable agent form, shared by /create and /edit
@@ -44,4 +45,13 @@ async function agentPage(req, res) {
   res.type('html').send(renderAgentPage(agent, { lang, baseUrl: baseUrl(req) }));
 }
 
-module.exports = { createPage, editPage, agentPage };
+// GET / : the Urban Web sales assistant. Same shell as /a/:slug, filled from services/urbanWeb.js (no database needed).
+function homePage(req, res) {
+  const q = req.query.lang;
+  const lang = LANGS.includes(q) ? q : (req.acceptsLanguages(...LANGS) || 'en');
+  const base = baseUrl(req);
+  res.set('Vary', 'Accept-Language');
+  res.type('html').send(renderAgentPage(URBAN_WEB, { lang, baseUrl: base, site: siteOptions(base) }));
+}
+
+module.exports = { homePage, createPage, editPage, agentPage };

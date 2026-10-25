@@ -8,7 +8,7 @@ async function hit(key, ttlMs) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const doc = await Counter.findOneAndUpdate(
-        { key }, { $inc: { count: 1 }, $setOnInsert: { expireAt } }, { upsert: true, new: true }
+        { key }, { $inc: { count: 1 }, $setOnInsert: { expireAt } }, { upsert: true, returnDocument: 'after' }
       ).lean();
       return doc.count;
     } catch (err) {

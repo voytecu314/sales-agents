@@ -16,7 +16,7 @@ app.use(express.json({ limit: '100kb' }));
 // Locally this serves /public. On Vercel the public/ folder is served by the CDN and this line is ignored.
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api', chatRoutes);   // demo chat (prompts/company.txt)
+app.use('/api', chatRoutes);   // Urban Web chat + contact form (prompts/urban_web.txt)
 app.use('/api', agentRoutes);  // multi-tenant agents
 app.use(pageRoutes);           // /create and /a/:slug
 

@@ -52,4 +52,15 @@ async function sendLead(agent, lead, baseUrl) {
   });
 }
 
-module.exports = { sendMail, sendVerification, sendLead, verifyToken };
+// Contact request from the Urban Web site itself. The recipient comes from the server's own configuration
+// (LEAD_NOTIFY_EMAIL), so no confirmation link is needed.
+async function sendSiteLead({ to, lead }) {
+  return sendMail({
+    to,
+    replyTo: lead.email,
+    subject: `New contact request via the Urban Web assistant`,
+    text: `New contact request from the Urban Web AI sales assistant.\n\nName: ${lead.name}\nEmail: ${lead.email}\nLanguage: ${lead.lang}\nMessage: ${lead.message || '-'}\n\nThe visitor agreed to be contacted about this request.`
+  });
+}
+
+module.exports = { sendMail, sendVerification, sendLead, sendSiteLead, verifyToken };
