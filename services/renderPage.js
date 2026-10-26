@@ -28,6 +28,8 @@ function brandMark(config) {
 }
 
 // `site` (optional) turns the shared page into a special one (the Urban Web home page): see services/urbanWeb.js#siteOptions.
+const { impressumUrl } = require('./legalDocs');
+
 function renderAgentPage(agent, { lang = 'en', baseUrl = '', site = {} } = {}) {
   if (!LANGS.includes(lang)) lang = 'en';
   const config = toPublicConfig(agent);
@@ -52,6 +54,14 @@ function renderAgentPage(agent, { lang = 'en', baseUrl = '', site = {} } = {}) {
     NEW_CHAT: esc(t.newChat),
     LANG_LABEL: esc(t.langLabel),
     AI_LABEL: esc(t.aiLabel),
+    LEGAL_LINKS: [
+      impressumUrl() && `<a id="impressum" class="linklike" href="${esc(impressumUrl())}" target="_blank" rel="noopener">${esc(t.impressum)}</a>`,
+      // the company's own legal notice: a link wins over text
+      agent.legalUrl && `<a id="owner-legal" class="linklike" href="${esc(agent.legalUrl)}" target="_blank" rel="noopener">${esc(t.ownerLegal)}</a>`,
+      !agent.legalUrl && agent.legalText && `<a id="owner-legal" class="linklike" href="${esc(`/a/${config.slug}/legal?lang=${lang}`)}" target="_blank" rel="noopener">${esc(t.ownerLegal)}</a>`
+    ].filter(Boolean).map((a) => ` · ${a}`).join(''),
+    PRIVACY: esc(t.privacy),
+    PRIVACY_URL: esc(`/privacy?lang=${lang}`),
     HEAD_EXTRA: site.headExtra || '',
     TOP_RIGHT: site.topRight || '',
     REPORT_BTN: site.noReport ? '' : ` · <button id="report" type="button" class="linklike">${esc(t.report)}</button>`,

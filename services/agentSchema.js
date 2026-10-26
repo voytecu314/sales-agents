@@ -9,7 +9,7 @@ const DARK_TEXT = '#140c2b';    // text on gradient buttons
 const HEX_RE = /^#[0-9a-f]{6}$/i;
 const EMAIL_RE = /^[^\s@<>"']{1,64}@[^\s@<>"']{1,200}\.[^\s@<>"']{2,}$/;
 
-const LIMITS = { name: 60, tagline: 100, welcome: 400, label: 40, send: 200, prompt: 12000, promptMin: 200 };
+const LIMITS = { legalUrl: 300, legalText: 1500, name: 60, tagline: 100, welcome: 400, label: 40, send: 200, prompt: 12000, promptMin: 200 };
 
 /* ---------- colors ---------- */
 const toRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
@@ -127,8 +127,18 @@ function validateAgent(input, { repair = false, prompt = false } = {}) {
     language: LANGS.includes(src.language) ? src.language : 'en',
     palette: checkPalette(src.palette, repair, errors, notes),
     locales: {},
-    notifyEmail: ''
+    notifyEmail: '',
+    legalUrl: '',
+    legalText: text(src.legalText, o('legalText', LIMITS.legalText, { multiline: true }))
   };
+  const legalUrl = typeof src.legalUrl === 'string' ? src.legalUrl.trim() : '';
+  if (legalUrl) {
+    try {
+      const u = new URL(legalUrl);
+      if (u.protocol !== 'https:' || u.username || u.password || legalUrl.length > LIMITS.legalUrl) throw new Error('bad');
+      value.legalUrl = u.href;
+    } catch { errors.push('legalUrl must be a valid https:// address (max 300 characters)'); }
+  }
   if (prompt) value.systemPrompt = text(src.systemPrompt, o('systemPrompt', LIMITS.prompt, { min: LIMITS.promptMin, multiline: true }));
 
   const email = typeof src.notifyEmail === 'string' ? src.notifyEmail.trim().toLowerCase() : '';

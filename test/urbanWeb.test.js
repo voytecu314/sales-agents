@@ -275,3 +275,143 @@ test('site lead mail (to the Urban Web owner) includes language and conversation
     if (savedHost === undefined) delete process.env.SMTP_HOST; else process.env.SMTP_HOST = savedHost;
   }
 });
+
+/* ---------- privacy policy and conversation sharing ---------- */
+test('privacy page: every language, operator details escaped, visible placeholders when unset', () => {
+  const { renderPrivacyPage, policyFor } = require('../services/privacyText');
+  const env = { LEGAL_NAME: 'Urban <b>Web</b>', LEGAL_ADDRESS: 'Str. 1, Berlin', LEGAL_EMAIL: 'privacy@example.org', LEGAL_HOSTING: 'HostCo', LEAD_RETENTION_DAYS: '30' };
+  for (const [l, title] of [['en', 'Privacy policy'], ['de', 'Datenschutzerklärung'], ['pl', 'Polityka prywatności']]) {
+    const html = renderPrivacyPage(l, env);
+    assert.match(html, new RegExp(`<html lang="${l}">`));
+    assert.ok(html.includes(`<h1>${title}</h1>`));
+    assert.ok(!/%%[A-Z_]+%%/.test(html) && !/\{(operator|email|days|hosting)\}/.test(html));
+    assert.ok(html.includes('Urban &lt;b&gt;Web&lt;/b&gt;') && !html.includes('<b>Web</b>'), 'operator name must be escaped');
+    assert.ok(html.includes('privacy@example.org') && html.includes('(HostCo)') && html.includes('30'));
+    assert.ok(!html.includes('class="notice"'));
+    for (const name of ['Groq', 'OpenRouter', 'Requesty']) assert.ok(html.includes(name));
+  }
+  const missing = renderPrivacyPage('en', {});
+  assert.ok(missing.includes('[LEGAL_NAME not set]') && missing.includes('class="notice"'));
+  assert.equal(policyFor('xx', env).lang, 'en');
+  assert.match(renderPrivacyPage('en', env), /<a href="\/privacy\?lang=de">DE<\/a>/);
+});
+
+test('agent pages link to the privacy policy in the page language', () => {
+  const de = page('de');
+  assert.match(de, /<a id="privacy" class="linklike" href="\/privacy\?lang=de">Datenschutz<\/a>/);
+  const stored = renderAgentPage({ ...URBAN_WEB, slug: 'acme', name: 'Acme' }, { lang: 'pl', baseUrl: 'https://x' });
+  assert.match(stored, /href="\/privacy\?lang=pl">Polityka prywatności<\/a>/);
+  assert.match(stored, /id="report"/); // report button still there for stored agents
+});
+
+test('lead mail: the sharing sentence appears only when the conversation is included', () => {
+  const { leadMail } = require('../services/mailTexts');
+  const lead = { name: 'Ann', email: 'ann@example.com', lang: 'en', message: '' };
+  assert.ok(!leadMail('de', 'Acme', lead, 'u', 'a@b.de').text.includes('dieses Gespräch weiterzugeben'));
+  assert.match(leadMail('de', 'Acme', { ...lead, context: [{ role: 'user', text: 'Hi' }] }, 'u', 'a@b.de').text, /dieses Gespräch weiterzugeben/);
+});
+
+/* ---------- self-hosted fonts ---------- */
+test('fonts: no Google requests in pages or CSP, font files declared (and present once public/fonts exists)', (t) => {
+  const fs = require('fs');
+  const path = require('path');
+  const root = path.join(__dirname, '..');
+  for (const v of ['agent', 'create', 'edit', 'legal']) {
+    assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(fs.readFileSync(path.join(root, 'views', `${v}.html`), 'utf8')), `${v}.html still uses Google Fonts`);
+  }
+  const headers = {};
+  require('../middleware/securityHeaders').securityHeaders({}, { set: (k, v) => { headers[k] = v; } }, () => {});
+  assert.ok(!/google|gstatic/.test(headers['Content-Security-Policy']));
+  assert.match(headers['Content-Security-Policy'], /font-src 'self'/);
+  const css = fs.readFileSync(path.join(root, 'public', 'style.css'), 'utf8');
+  const files = ['bricolage-latin', 'bricolage-latin-ext', 'figtree-latin', 'figtree-latin-ext'].map((n) => `${n}.woff2`);
+  for (const f of files) assert.ok(css.includes(`/fonts/${f}`), `${f} not declared in style.css`);
+  if (!fs.existsSync(path.join(root, 'public', 'fonts', 'figtree-latin.woff2')) && !fs.existsSync(path.join(root, 'public', 'fonts', 'bricolage-latin.woff2'))) {
+    return t.skip('font files not added yet (see public/fonts/README.md)');
+  }
+  for (const f of files) assert.ok(fs.existsSync(path.join(root, 'public', 'fonts', f)), `public/fonts/${f} is missing`);
+});
+
+test('privacy policy: no font provider section any more, sections numbered 1..9', () => {
+  const { policyFor } = require('../services/privacyText');
+  for (const l of ['en', 'de', 'pl']) {
+    const { body } = policyFor(l, {});
+    assert.ok(!/Google/.test(body));
+    assert.deepEqual([...body.matchAll(/<h2>(\d+)\./g)].map((m) => Number(m[1])), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  }
+});
+
+/* ---------- legal notice (Impressum), terms of use ---------- */
+test('impressumUrl: only http(s) addresses from the environment are accepted', () => {
+  const { impressumUrl } = require('../services/legalDocs');
+  assert.equal(impressumUrl({ LEGAL_IMPRESSUM_URL: 'https://urban-web.example/impressum' }), 'https://urban-web.example/impressum');
+  for (const bad of ['', undefined, 'javascript:alert(1)', 'ftp://x.de/i', 'not a url']) assert.equal(impressumUrl({ LEGAL_IMPRESSUM_URL: bad }), '');
+});
+
+test('agent page footer: operator Impressum from the environment, company legal notice link or text, in the page language', () => {
+  const saved = process.env.LEGAL_IMPRESSUM_URL;
+  const base = { ...URBAN_WEB, slug: 'acme', name: 'Acme' };
+  try {
+    delete process.env.LEGAL_IMPRESSUM_URL;
+    const none = renderAgentPage(base, { lang: 'de', baseUrl: 'https://x' });
+    assert.ok(!none.includes('id="impressum"') && !none.includes('id="owner-legal"'));
+
+    process.env.LEGAL_IMPRESSUM_URL = 'https://urban-web.example/impressum';
+    const withImp = renderAgentPage(base, { lang: 'de', baseUrl: 'https://x' });
+    assert.match(withImp, /<a id="impressum" class="linklike" href="https:\/\/urban-web\.example\/impressum" target="_blank" rel="noopener">Impressum<\/a>/);
+    assert.match(renderAgentPage(base, { lang: 'en', baseUrl: 'https://x' }), />Legal notice<\/a>/);
+
+    const link = renderAgentPage({ ...base, legalUrl: 'https://acme.example/imprint', legalText: 'ignored when a link is set' }, { lang: 'de', baseUrl: 'https://x' });
+    assert.match(link, /id="owner-legal" class="linklike" href="https:\/\/acme\.example\/imprint"[^>]*>Impressum des Unternehmens<\/a>/);
+
+    const text = renderAgentPage({ ...base, legalText: 'Acme GmbH, Street 1' }, { lang: 'pl', baseUrl: 'https://x' });
+    assert.match(text, /id="owner-legal" class="linklike" href="\/a\/acme\/legal\?lang=pl"[^>]*>Informacje prawne firmy<\/a>/);
+    assert.ok(!/%%[A-Z_]+%%/.test(text));
+  } finally {
+    if (saved === undefined) delete process.env.LEGAL_IMPRESSUM_URL; else process.env.LEGAL_IMPRESSUM_URL = saved;
+  }
+});
+
+test('validateAgent: legalUrl must be a clean https address, legalText keeps paragraphs and has a limit', () => {
+  const { validateAgent } = require('../services/agentSchema');
+  const ok = { name: 'Acme', language: 'en', locales: URBAN_WEB.locales, palette: URBAN_WEB.palette };
+  const run = (extra) => validateAgent({ ...ok, ...extra });
+  assert.deepEqual(run({}).errors, []);
+  assert.equal(run({ legalUrl: ' https://acme.example/imprint ' }).value.legalUrl, 'https://acme.example/imprint');
+  for (const bad of ['http://acme.example', 'javascript:alert(1)', 'https://user:pw@acme.example', 'acme.example', `https://a.example/${'x'.repeat(300)}`]) {
+    assert.ok(run({ legalUrl: bad }).errors.some((e) => e.startsWith('legalUrl')), bad);
+  }
+  assert.equal(run({ legalText: 'Acme GmbH\nStreet 1\n\nCEO: A. B.' }).value.legalText, 'Acme GmbH\nStreet 1\n\nCEO: A. B.');
+  assert.ok(run({ legalText: 'x'.repeat(1501) }).errors.some((e) => e.startsWith('legalText')));
+});
+
+test('company legal notice page: text is escaped, paragraphs kept, shell has the footer links', () => {
+  const { renderOwnerLegal } = require('../services/legalDocs');
+  const html = renderOwnerLegal('de', 'Acme <GmbH>', 'Acme <b>GmbH</b>\nStreet 1\n\nCEO: A. B.', {});
+  assert.match(html, /<title>Impressum von Acme &lt;GmbH&gt;<\/title>/);
+  assert.ok(html.includes('<p>Acme &lt;b&gt;GmbH&lt;/b&gt;<br>Street 1</p>') && html.includes('<p>CEO: A. B.</p>'));
+  assert.ok(!html.includes('<b>') && html.includes('/privacy?lang=de') && html.includes('/terms?lang=de'));
+});
+
+test('terms of use: three languages, 10 sections, Impressum duty names the real form field', () => {
+  const fs = require('fs');
+  const { renderTermsPage, TEXT, TERMS_VERSION } = require('../services/termsText');
+  const form = fs.readFileSync(require('path').join(__dirname, '..', 'public', 'agent-form.js'), 'utf8');
+  const env = { LEGAL_NAME: 'Urban Web', LEGAL_ADDRESS: 'Str. 1', LEGAL_EMAIL: 'legal@example.org', LEGAL_IMPRESSUM_URL: 'https://u.example/impressum' };
+  assert.match(TERMS_VERSION, /^\d{4}-\d{2}-\d{2}$/);
+  for (const [l, field] of [['en', 'Legal notice of your company'], ['de', 'Impressum Ihres Unternehmens'], ['pl', 'Informacje prawne Twojej firmy']]) {
+    const html = renderTermsPage(l, env);
+    assert.equal((html.match(/<h2>/g) || []).length, 10);
+    assert.ok(!/\{(operator|email|days|hosting)\}/.test(html) && html.includes('legal@example.org') && html.includes('https://u.example/impressum'));
+    assert.ok(JSON.stringify(TEXT[l]).includes(field), `terms (${l}) must name the field "${field}"`);
+    assert.ok(form.includes(field), `form (${l}) must contain "${field}"`);
+  }
+});
+
+test('forms: the ids used by the scripts exist in the views', () => {
+  const fs = require('fs');
+  const v = (n) => fs.readFileSync(require('path').join(__dirname, '..', 'views', n), 'utf8');
+  for (const id of ['r-legal-url', 'r-legal-text']) assert.ok(v('review-form.html').includes(`id="${id}"`), id);
+  assert.ok(v('create.html').includes('id="r-terms"') && v('create.html').includes('id="r-terms-link"'));
+  for (const f of ['create.html', 'edit.html']) assert.ok(v(f).includes('%%LEGAL_FOOT%%'), f);
+});

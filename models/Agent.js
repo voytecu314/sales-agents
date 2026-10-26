@@ -19,6 +19,10 @@ const agentSchema = new mongoose.Schema({
   hasLogo: { type: Boolean, default: false },
   logoVersion: { type: Number, default: 0 },                   // changes with every new logo (cache busting)
   language: { type: String, enum: LANGS, default: 'en' },   // main language of the company
+  legalUrl: { type: String, default: '', maxlength: 300 },   // the company's own legal notice (Impressum): link ...
+  legalText: { type: String, default: '', maxlength: 1500 }, // ... or text (shown on /a/:slug/legal; the link wins if both are set)
+  termsAcceptedAt: Date,                                     // owner accepted the terms of use (see services/termsText.js)
+  termsVersion: String,
   ownerLang: { type: String, enum: LANGS },                  // language the owner works in: e-mails and pages sent to the owner use it
   palette: {
     accent: String, accent2: String, accent3: String, bg: String, panel: String

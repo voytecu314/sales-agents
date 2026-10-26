@@ -19,7 +19,7 @@ const TEXT = {
     rNotify: 'E-mail for contact requests (optional)', rNotifyHint: 'Contact requests are always saved and listed on your edit page. Add an e-mail to also get them by mail; we first send a confirmation link to this address.',
     editTitle: 'Edit your AI sales agent', keyLabel: 'Owner key', keyGo: 'Open', eStatus: 'Status', sActive: 'Online', sPaused: 'Paused (visitors see "unavailable")',
     save: 'Save changes', saving: 'Saving…', saved: 'Saved.', delete: 'Delete agent', deleteConfirm: 'Delete this agent and all its contact requests? This cannot be undone.',
-    leadsTitle: 'Contact requests', leadConvo: 'Conversation', leadVisitor: 'Visitor', leadAgent: 'Agent', leadsHint: 'The last 50 requests. They are deleted automatically after 90 days.', noLeads: 'No requests yet.',
+    privacyLink: 'Privacy policy', termsLink: 'Terms of use', impressumLink: 'Legal notice', rLegal: 'Legal notice of your company (Impressum)', rLegalUrl: 'Link to your legal notice', rLegalText: 'or the text of your legal notice', rLegalHint: "Shown in the footer of your agent's page. Required if your agent addresses customers in Germany or another country that asks for it. A link wins if you fill in both.", termsAccept: 'I have read and accept the', termsAccept2: ", including adding my company's legal notice (Impressum) where the law requires it.", termsRequired: 'Please accept the terms of use.', leadsTitle: 'Contact requests', leadConvo: 'Conversation', leadVisitor: 'Visitor', leadAgent: 'Agent', leadsHint: 'The last 50 requests. They are deleted automatically after 90 days.', noLeads: 'No requests yet.',
     usage: 'Messages today: {n} of {cap}', verifyPending: 'Not confirmed yet: open the link we sent to this address. Until then requests are only stored here, not e-mailed.',
     verifyOk: 'Address confirmed. New requests are e-mailed to it.', verifySent: 'Saved. We sent a confirmation link to the new address.', authError: 'This owner key is not valid.',
     title: 'Create your AI sales agent', subtitle: 'Describe your company in your own words. You get a sales agent on its own link.',
@@ -52,7 +52,7 @@ const TEXT = {
     rNotify: 'E-Mail für Kontaktanfragen (optional)', rNotifyHint: 'Kontaktanfragen werden immer gespeichert und auf Ihrer Bearbeitungsseite angezeigt. Mit einer E-Mail-Adresse erhalten Sie sie zusätzlich per Mail; wir senden zuerst einen Bestätigungslink.',
     editTitle: 'KI-Verkaufsagenten bearbeiten', keyLabel: 'Besitzer-Schlüssel', keyGo: 'Öffnen', eStatus: 'Status', sActive: 'Online', sPaused: 'Pausiert (Besucher sehen „nicht verfügbar“)',
     save: 'Änderungen speichern', saving: 'Wird gespeichert…', saved: 'Gespeichert.', delete: 'Agenten löschen', deleteConfirm: 'Diesen Agenten und alle Kontaktanfragen löschen? Das lässt sich nicht rückgängig machen.',
-    leadsTitle: 'Kontaktanfragen', leadConvo: 'Gespräch', leadVisitor: 'Besucher', leadAgent: 'Agent', leadsHint: 'Die letzten 50 Anfragen. Sie werden nach 90 Tagen automatisch gelöscht.', noLeads: 'Noch keine Anfragen.',
+    privacyLink: 'Datenschutz', termsLink: 'Nutzungsbedingungen', impressumLink: 'Impressum', rLegal: 'Impressum Ihres Unternehmens', rLegalUrl: 'Link zu Ihrem Impressum', rLegalText: 'oder der Text Ihres Impressums', rLegalHint: 'Wird in der Fußzeile der Seite Ihres Agenten angezeigt. Pflicht, wenn sich Ihr Agent an Kunden in Deutschland oder einem anderen Land mit dieser Anforderung richtet. Ein Link hat Vorrang, wenn Sie beides ausfüllen.', termsAccept: 'Ich habe die', termsAccept2: ' gelesen und akzeptiere sie, einschließlich der Angabe des Impressums meines Unternehmens, wo das Gesetz es verlangt.', termsRequired: 'Bitte akzeptieren Sie die Nutzungsbedingungen.', leadsTitle: 'Kontaktanfragen', leadConvo: 'Gespräch', leadVisitor: 'Besucher', leadAgent: 'Agent', leadsHint: 'Die letzten 50 Anfragen. Sie werden nach 90 Tagen automatisch gelöscht.', noLeads: 'Noch keine Anfragen.',
     usage: 'Nachrichten heute: {n} von {cap}', verifyPending: 'Noch nicht bestätigt: Öffnen Sie den Link, den wir an diese Adresse gesendet haben. Bis dahin werden Anfragen nur hier gespeichert, nicht per E-Mail verschickt.',
     verifyOk: 'Adresse bestätigt. Neue Anfragen werden per E-Mail an sie gesendet.', verifySent: 'Gespeichert. Wir haben einen Bestätigungslink an die neue Adresse gesendet.', authError: 'Dieser Besitzer-Schlüssel ist ungültig.',
     title: 'Erstellen Sie Ihren KI-Verkaufsagenten', subtitle: 'Beschreiben Sie Ihr Unternehmen. Sie erhalten einen Verkaufsagenten unter eigenem Link.',
@@ -85,7 +85,7 @@ const TEXT = {
     rNotify: 'E-mail do zgłoszeń kontaktowych (opcjonalnie)', rNotifyHint: 'Zgłoszenia kontaktowe są zawsze zapisywane i widoczne na stronie edycji. Dodaj e-mail, aby dostawać je także pocztą; najpierw wyślemy na ten adres link potwierdzający.',
     editTitle: 'Edytuj agenta sprzedaży AI', keyLabel: 'Klucz właściciela', keyGo: 'Otwórz', eStatus: 'Status', sActive: 'Online', sPaused: 'Wstrzymany (odwiedzający widzą „niedostępny”)',
     save: 'Zapisz zmiany', saving: 'Zapisywanie…', saved: 'Zapisano.', delete: 'Usuń agenta', deleteConfirm: 'Usunąć tego agenta i wszystkie zgłoszenia kontaktowe? Tego nie da się cofnąć.',
-    leadsTitle: 'Zgłoszenia kontaktowe', leadConvo: 'Rozmowa', leadVisitor: 'Odwiedzający', leadAgent: 'Agent', leadsHint: 'Ostatnie 50 zgłoszeń. Po 90 dniach są usuwane automatycznie.', noLeads: 'Brak zgłoszeń.',
+    privacyLink: 'Polityka prywatności', termsLink: 'Regulamin', impressumLink: 'Impressum', rLegal: 'Informacje prawne Twojej firmy', rLegalUrl: 'Link do Twoich informacji prawnych', rLegalText: 'lub tekst Twoich informacji prawnych', rLegalHint: 'Pokazywane w stopce strony Twojego agenta. Wymagane, jeśli agent jest skierowany do klientów w Niemczech lub innym kraju z takim wymogiem. Link ma pierwszeństwo, jeśli wypełnisz oba pola.', termsAccept: 'Przeczytałem(-am) i akceptuję', termsAccept2: ', w tym podanie informacji prawnych (Impressum) mojej firmy tam, gdzie wymaga tego prawo.', termsRequired: 'Zaakceptuj regulamin.', leadsTitle: 'Zgłoszenia kontaktowe', leadConvo: 'Rozmowa', leadVisitor: 'Odwiedzający', leadAgent: 'Agent', leadsHint: 'Ostatnie 50 zgłoszeń. Po 90 dniach są usuwane automatycznie.', noLeads: 'Brak zgłoszeń.',
     usage: 'Wiadomości dzisiaj: {n} z {cap}', verifyPending: 'Jeszcze niepotwierdzony: otwórz link wysłany na ten adres. Do tego czasu zgłoszenia są tylko zapisywane tutaj, bez wysyłki e-mailem.',
     verifyOk: 'Adres potwierdzony. Nowe zgłoszenia są wysyłane na ten adres.', verifySent: 'Zapisano. Wysłaliśmy link potwierdzający na nowy adres.', authError: 'Ten klucz właściciela jest nieprawidłowy.',
     title: 'Stwórz swojego agenta sprzedaży AI', subtitle: 'Opisz swoją firmę. Dostaniesz agenta sprzedaży pod własnym linkiem.',
@@ -130,6 +130,9 @@ const TEXT = {
     document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
     $('ui-lang').value = ui;
+    $('privacy-link')?.setAttribute('href', `/privacy?lang=${ui}`);
+    $('terms-link')?.setAttribute('href', `/terms?lang=${ui}`);
+    $('r-terms-link')?.setAttribute('href', `/terms?lang=${ui}`);
     if (draft) renderQuickReplies();
     listeners.forEach((fn) => fn());
   }
@@ -159,6 +162,8 @@ const TEXT = {
     $('r-name').value = d.name;
     $('r-emoji').value = d.emoji;
     $('r-notify').value = d.notifyEmail || '';
+    $('r-legal-url').value = d.legalUrl || '';
+    $('r-legal-text').value = d.legalText || '';
     for (const k of PALETTE_KEYS) $('c-' + k).value = d.palette[k];
     setLogo(d.logoUrl || null);
     $('r-locale').value = editing;
@@ -211,6 +216,8 @@ const TEXT = {
     draft.name = $('r-name').value;
     draft.emoji = $('r-emoji').value;
     draft.notifyEmail = $('r-notify').value;
+    draft.legalUrl = $('r-legal-url').value;
+    draft.legalText = $('r-legal-text').value;
     for (const k of PALETTE_KEYS) draft.palette[k] = $('c-' + k).value;
     return draft;
   }

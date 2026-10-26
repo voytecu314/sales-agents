@@ -19,6 +19,7 @@ const REGEN_DAILY_CAP = 10; // rewrites of the instructions per agent and day (e
 // What the owner may see and change. NOT the system prompt: the server writes it from `inputs`.
 const editable = (a) => ({
   name: a.name, emoji: a.emoji || '', language: a.language, palette: a.palette, locales: a.locales,
+  legalUrl: a.legalUrl || '', legalText: a.legalText || '',
   notifyEmail: a.notifyEmail || '', notifyEmailVerified: Boolean(a.notifyEmailVerified), status: a.status,
   logoUrl: a.hasLogo ? `/api/agents/${a.slug}/logo?v=${a.logoVersion || 0}` : null
 });
@@ -64,7 +65,7 @@ async function update(req, res) {
 
   try {
     // Check what the owner wrote BEFORE spending an LLM call on it. (Prompt excluded: it is ours.)
-    const forCheck = (a, i) => textOf({ name: a.name, locales: a.locales, inputs: i, systemPrompt: '' });
+    const forCheck = (a, i) => textOf({ name: a.name, locales: a.locales, inputs: i, legalText: a.legalText, systemPrompt: '' });
     const nextInputs = inputsChanged ? inputs : (old.inputs || {});
     if (forCheck(value, nextInputs) !== forCheck(old, old.inputs || {})) {
       const verdict = await moderate(forCheck(value, nextInputs));

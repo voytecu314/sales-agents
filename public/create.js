@@ -34,11 +34,12 @@ $('back').addEventListener('click', () => { showError(''); show('step-describe')
 $('step-review').addEventListener('submit', async (e) => {
   e.preventDefault();
   showError('');
+  if (!$('r-terms').checked) { showError(t('termsRequired')); return; }
   const btn = $('publish');
   btn.disabled = true; btn.textContent = t('publishing');
   try {
     const wantsLogo = logoSelected();
-    const out = await request('POST', '/api/agents', { draftId, agent: collect(), lang: getUi() });
+    const out = await request('POST', '/api/agents', { draftId, agent: collect(), lang: getUi(), acceptTerms: true });
     $('d-logo-note').hidden = true;
     $('d-color-note').textContent = t('colorsAdjusted');
     $('d-color-note').hidden = !out.colorsAdjusted;

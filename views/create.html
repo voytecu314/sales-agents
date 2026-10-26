@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Create your AI sales agent</title>
   <meta name="robots" content="noindex">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/chat.css">
   <link rel="stylesheet" href="/create.css">
@@ -35,6 +32,7 @@
     <!-- step 2: review and edit -->
     <form id="step-review" class="panel-form" hidden autocomplete="off">
             %%REVIEW_FORM%%
+      <label class="terms-row"><input type="checkbox" id="r-terms"><span><span data-i18n="termsAccept">I have read and accept the</span> <a id="r-terms-link" href="/terms" target="_blank" rel="noopener" data-i18n="termsLink">Terms of use</a><span data-i18n="termsAccept2">, including adding my company's legal notice (Impressum) where the law requires it.</span></span></label>
       <div class="actions-row">
         <button class="ghost" type="button" id="back" data-i18n="back">Back</button>
         <button class="btn" type="submit" id="publish" data-i18n="publish">Publish my agent</button>
@@ -59,6 +57,7 @@
       </div>
     </section>
   </main>
+  <footer class="legal-foot"><a id="privacy-link" href="/privacy" data-i18n="privacyLink">Privacy policy</a>%%LEGAL_FOOT%%</footer>
   <script src="/agent-form.js"></script>
   <script src="/create.js"></script>
 </body>

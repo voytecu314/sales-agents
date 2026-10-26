@@ -21,6 +21,11 @@ legend { padding: 0 8px; font-weight: 600; color: var(--text); }
 .colors input[type=color] { width: 44px; height: 36px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: none; cursor: pointer; }
 .qr { display: grid; gap: 10px; }
 .qr .two { gap: 10px; }
+.legal-foot { text-align: center; padding: 8px 0 28px; font-size: .85rem; }
+.legal-foot a { color: var(--muted); }
+.terms-row { display: flex; gap: 10px; align-items: flex-start; font-size: .92rem; }
+.terms-row input { margin-top: 4px; }
+.terms-row a { color: inherit; }
 .hint { margin: 0; color: var(--muted); font-size: .9rem; }
 .hint.suggest { color: var(--text); padding-left: 10px; border-left: 3px solid var(--violet); }
 .actions-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

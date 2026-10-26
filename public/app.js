@@ -48,6 +48,11 @@ function applyLang() {
   document.getElementById('reset').textContent = t('newChat');
   document.getElementById('lang').setAttribute('aria-label', t('langLabel'));
   document.getElementById('foot-ai').textContent = t('aiLabel');
+  const pv = document.getElementById('privacy'); // footer link follows the language
+  if (pv) { pv.textContent = t('privacy'); pv.href = `/privacy?lang=${lang}`; }
+  const im = document.getElementById('impressum'); if (im) im.textContent = t('impressum');
+  const ol = document.getElementById('owner-legal');
+  if (ol) { ol.textContent = t('ownerLegal'); if (ol.getAttribute('href').startsWith('/a/')) ol.href = ol.getAttribute('href').replace(/lang=\w+/, `lang=${lang}`); }
   const rb = document.getElementById('report'); // absent on the Urban Web page
   if (rb) rb.textContent = t(rb.dataset.sent ? 'reported' : 'report');
   document.getElementById('lang').value = lang;
@@ -123,7 +128,7 @@ async function sendLead(f) {
   const body = {
     name: fd.get('name') || '', email: fd.get('email') || '', message: fd.get('message') || '',
     consent: fd.get('consent') === 'yes', website: fd.get('website') || '', lang,
-    context: history.slice(-12) // the team sees the conversation so far (the form says so)
+    context: fd.get('share') === 'yes' ? history.slice(-12) : [] // the conversation goes along only if the visitor ticked the box
   };
   f.nextElementSibling?.classList.contains('lead-error') && f.nextElementSibling.remove();
   lockForm(f, true);
@@ -154,9 +159,15 @@ function addHoneypots(root) {
     hp.type = 'text'; hp.name = 'website'; hp.className = 'hp'; hp.tabIndex = -1;
     hp.autocomplete = 'off'; hp.setAttribute('aria-hidden', 'true');
     f.append(hp);
-    const note = document.createElement('p'); // tells the visitor that the conversation goes along (set by the page, not by the AI)
-    note.className = 'lead-note'; note.textContent = t('leadContextNote');
-    f.append(note);
+    // Optional sharing of the conversation + privacy link. Added by the page (not by the AI), unchecked by default.
+    const share = document.createElement('label'); share.className = 'choice lead-share';
+    const box = document.createElement('input'); box.type = 'checkbox'; box.name = 'share'; box.value = 'yes';
+    const txt = document.createElement('span'); txt.textContent = t('leadShare');
+    share.append(box, txt);
+    const note = document.createElement('p'); note.className = 'lead-note';
+    const link = document.createElement('a'); link.className = 'privacy-link'; link.href = `/privacy?lang=${lang}`; link.target = '_blank'; link.rel = 'noopener'; link.textContent = t('privacy');
+    note.append(link);
+    f.append(share, note);
     f.dataset.hp = '1';
   });
 }

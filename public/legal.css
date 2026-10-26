@@ -1,0 +1,15 @@
+/* Legal pages (privacy policy): plain, readable, no external fonts */
+:root { color-scheme: light; }
+body { margin: 0; background: #fff; color: rgb(33, 37, 41); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 24px 20px 64px; }
+nav { display: flex; justify-content: space-between; gap: 12px; font-size: .9rem; margin-bottom: 20px; }
+nav a { color: rgb(13, 110, 253); text-decoration: none; }
+nav a[aria-current] { font-weight: 700; color: rgb(33, 37, 41); }
+nav span { display: inline-flex; gap: 12px; }
+h1 { font-size: 1.8rem; margin: 0 0 4px; }
+h2 { font-size: 1.1rem; margin: 28px 0 6px; }
+p { margin: 0 0 10px; }
+.updated { color: rgb(108, 117, 125); font-size: .9rem; margin-bottom: 20px; }
+.notice { padding: 10px 14px; border-left: 4px solid #dc3545; background: #fdecee; border-radius: 6px; }
+footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid rgb(222, 226, 230); font-size: .9rem; color: rgb(108, 117, 125); }
+footer a { color: rgb(13, 110, 253); text-decoration: none; }

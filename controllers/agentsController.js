@@ -13,6 +13,7 @@ const { buildLinkPolicy } = require('../services/linkPolicy');
 const { moderate, textOf } = require('../services/moderation');
 const { sendVerification } = require('../services/mailer');
 const { suggestEmail } = require('../services/emailSuggest');
+const { TERMS_VERSION } = require('../services/termsText');
 const { hit, dailyKey } = require('../services/counters');
 
 const DAILY_CAP = () => Number(process.env.DAILY_MESSAGE_CAP) || 200; // messages per agent and day
@@ -43,6 +44,7 @@ async function create(req, res) {
   const draftId = String(req.body?.draftId || '').slice(0, 100);
   try {
     // Phase 4: the payment check goes here (middleware on this route)
+    if (req.body?.acceptTerms !== true) return res.status(400).json({ error: 'Please accept the terms of use.' });
     const draft = draftId ? await Draft.findOne({ draftId }).lean() : null;
     if (!draft) return res.status(400).json({ error: 'Your draft has expired. Please generate your agent again.' });
 
@@ -51,7 +53,7 @@ async function create(req, res) {
 
     if (!(await Draft.findOneAndDelete({ draftId }))) return res.status(400).json({ error: 'This draft was already published.' }); // single use
     const ownerLang = LANGS.includes(req.body?.lang) ? req.body.lang : value.language; // the language the owner created the agent in
-    const { slug, editToken, keyExpiresAt } = await createAgent(value, { systemPrompt: draft.systemPrompt, inputs: draft.inputs, ownerLang });
+    const { slug, editToken, keyExpiresAt } = await createAgent(value, { systemPrompt: draft.systemPrompt, inputs: draft.inputs, ownerLang, termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION });
     const base = baseUrl(req);
     if (value.notifyEmail) {
       await sendVerification({ slug, name: value.name, notifyEmail: value.notifyEmail, lang: ownerLang }, base).catch((e) => console.error('Verification mail failed:', e.message));

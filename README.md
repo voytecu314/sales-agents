@@ -28,6 +28,24 @@ npm run dev            # http://localhost:3000
 - Contact form: `POST /api/lead` stores the request in MongoDB (as slug `_urban-web`) and e-mails it to `LEAD_NOTIFY_EMAIL`
   (fallback `ADMIN_EMAIL`) via SMTP. Without `MONGODB_URI` the assistant does not offer the form.
 
+## Fonts
+
+- Fonts are self-hosted from `public/fonts/` (see the README there for the four files). No request goes to Google; the CSP allows fonts only from this site.
+
+## Privacy policy (`/privacy`)
+
+- Text in `services/privacyText.js` (en/de/pl), served by the server and linked in the footer of every agent page and on the create and edit pages.
+- It is a draft based on what the code does; have it reviewed. Operator details come from `LEGAL_NAME`, `LEGAL_ADDRESS`, `LEGAL_EMAIL` (and optional `LEGAL_HOSTING`);
+  missing values show as visible placeholders. Update the text whenever data flows change (AI providers, fonts, new stored data).
+- Contact forms: the visitor can optionally tick "send our conversation" (added by the page, unchecked by default). Without it the lead has no conversation.
+
+## Legal notice (Impressum) and terms of use
+
+- `LEGAL_IMPRESSUM_URL`: the operator's own Impressum (a page on your website). It is linked in the footer of every agent page, the create/edit pages and the legal pages. Without it no link is shown.
+- Each agent owner can add the company's own legal notice in the agent form: a link (https only) or text. A link is shown in the footer of the agent's page, text is shown on `/a/:slug/legal`. The text is moderated like the rest.
+- `/terms`: terms of use for company owners (en/de/pl, `services/termsText.js`). Creating an agent requires accepting them; the time and the version (`TERMS_VERSION`) are stored on the agent. Agents created before this change have no acceptance on record.
+- Both texts are drafts: have them reviewed by a lawyer.
+
 ## Multi-tenant agents
 
 - `/create`: the owner describes the company, reviews the generated agent (prompt, texts in en/de/pl, colors) and publishes it.

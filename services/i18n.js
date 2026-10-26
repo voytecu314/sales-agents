@@ -14,7 +14,10 @@ const STRINGS = {
     reported: 'Thank you, we will look into it.',
     leadThanks: 'Thank you! Your request was sent. The team will get back to you.',
     leadError: 'Could not send your request.',
-    leadContextNote: 'Our conversation so far is sent to the team together with your request.'
+    leadShare: 'Also send our conversation so far to the team (optional)',
+    privacy: 'Privacy policy',
+    impressum: 'Legal notice',
+    ownerLegal: 'Company legal notice'
   },
   de: {
     placeholder: 'Stellen Sie eine Frage…',
@@ -28,7 +31,10 @@ const STRINGS = {
     reported: 'Danke, wir prüfen das.',
     leadThanks: 'Danke! Ihre Anfrage wurde gesendet. Das Team meldet sich bei Ihnen.',
     leadError: 'Ihre Anfrage konnte nicht gesendet werden.',
-    leadContextNote: 'Unser bisheriges Gespräch wird zusammen mit Ihrer Anfrage an das Team gesendet.'
+    leadShare: 'Unser bisheriges Gespräch zusätzlich an das Team senden (optional)',
+    privacy: 'Datenschutz',
+    impressum: 'Impressum',
+    ownerLegal: 'Impressum des Unternehmens'
   },
   pl: {
     placeholder: 'Zadaj pytanie…',
@@ -42,7 +48,10 @@ const STRINGS = {
     reported: 'Dziękujemy, sprawdzimy to.',
     leadThanks: 'Dziękujemy! Zgłoszenie zostało wysłane. Zespół się z Tobą skontaktuje.',
     leadError: 'Nie udało się wysłać zgłoszenia.',
-    leadContextNote: 'Nasza dotychczasowa rozmowa zostanie wysłana zespołowi razem ze zgłoszeniem.'
+    leadShare: 'Wyślij zespołowi także naszą dotychczasową rozmowę (opcjonalnie)',
+    privacy: 'Polityka prywatności',
+    impressum: 'Impressum',
+    ownerLegal: 'Informacje prawne firmy'
   }
 };
 

@@ -24,19 +24,22 @@ const LEAD = {
   en: {
     subject: (n) => `New contact request via ${n}`, intro: (n) => `New contact request from your AI sales agent "${n}".`,
     name: 'Name', email: 'Email', lang: "Visitor's language", message: 'Message', agent: 'Agent', convo: 'Conversation so far (latest messages)', visitor: 'Visitor', bot: 'Agent',
-    footer: (to) => `You receive this because ${to} was confirmed as the contact address of this agent. The visitor agreed to be contacted and to share this conversation.`,
+    footer: (to) => `You receive this because ${to} was confirmed as the contact address of this agent. The visitor agreed to be contacted.`,
+    shared: 'The visitor also chose to share this conversation.',
     langs: { en: 'English', de: 'German', pl: 'Polish' }
   },
   de: {
     subject: (n) => `Neue Kontaktanfrage über ${n}`, intro: (n) => `Neue Kontaktanfrage von Ihrem KI-Verkaufsagenten „${n}“.`,
     name: 'Name', email: 'E-Mail', lang: 'Sprache des Besuchers', message: 'Nachricht', agent: 'Agent', convo: 'Bisheriges Gespräch (letzte Nachrichten)', visitor: 'Besucher', bot: 'Agent',
-    footer: (to) => `Sie erhalten diese Nachricht, weil ${to} als Kontaktadresse dieses Agenten bestätigt wurde. Der Besucher hat zugestimmt, kontaktiert zu werden und dieses Gespräch weiterzugeben.`,
+    footer: (to) => `Sie erhalten diese Nachricht, weil ${to} als Kontaktadresse dieses Agenten bestätigt wurde. Der Besucher hat zugestimmt, kontaktiert zu werden.`,
+    shared: 'Der Besucher hat sich außerdem entschieden, dieses Gespräch weiterzugeben.',
     langs: { en: 'Englisch', de: 'Deutsch', pl: 'Polnisch' }
   },
   pl: {
     subject: (n) => `Nowe zgłoszenie kontaktowe przez ${n}`, intro: (n) => `Nowe zgłoszenie od Twojego agenta sprzedaży AI „${n}”.`,
     name: 'Imię i nazwisko', email: 'E-mail', lang: 'Język odwiedzającego', message: 'Wiadomość', agent: 'Agent', convo: 'Dotychczasowa rozmowa (ostatnie wiadomości)', visitor: 'Odwiedzający', bot: 'Agent',
-    footer: (to) => `Otrzymujesz tę wiadomość, ponieważ ${to} został potwierdzony jako adres kontaktowy tego agenta. Odwiedzający wyraził zgodę na kontakt i przekazanie tej rozmowy.`,
+    footer: (to) => `Otrzymujesz tę wiadomość, ponieważ ${to} został potwierdzony jako adres kontaktowy tego agenta. Odwiedzający wyraził zgodę na kontakt.`,
+    shared: 'Odwiedzający zdecydował też o przekazaniu tej rozmowy.',
     langs: { en: 'angielski', de: 'niemiecki', pl: 'polski' }
   }
 };
@@ -57,7 +60,7 @@ function leadMail(lang, name, lead, agentUrl, to) {
     x.intro(name), '',
     `${x.name}: ${lead.name}`, `${x.email}: ${lead.email}`, `${x.lang}: ${languageName(lang, lead.lang)}`, `${x.message}: ${lead.message || '-'}`,
     ...(convo ? ['', `${x.convo}:`, convo] : []),
-    '', `${x.agent}: ${agentUrl}`, '', x.footer(to)
+    '', `${x.agent}: ${agentUrl}`, '', x.footer(to) + (convo ? ' ' + x.shared : '')
   ].join('\n');
   return { subject: x.subject(name), text };
 }

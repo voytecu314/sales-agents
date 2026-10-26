@@ -3,8 +3,8 @@
 const CSP = [
   "default-src 'self'",
   "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // inline: theme variables of the agent page
-  "font-src https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'", // inline: theme variables of the agent page
+  "font-src 'self'",
   "img-src 'self' data:",
   "connect-src 'self'",
   "object-src 'none'",

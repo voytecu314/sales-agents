@@ -65,7 +65,7 @@ async function sendSiteLead({ to, lead }) {
       'New contact request from the Urban Web AI sales assistant.', '',
       `Name: ${lead.name}`, `Email: ${lead.email}`, `Visitor's language: ${languageName('en', lead.lang)}`, `Message: ${lead.message || '-'}`,
       ...(lead.context?.length ? ['', 'Conversation so far (latest messages):', conversationText('en', lead.context)] : []),
-      '', 'The visitor agreed to be contacted about this request and to share this conversation.'
+      '', 'The visitor agreed to be contacted about this request.' + (lead.context?.length ? ' The visitor also chose to share this conversation.' : '')
     ].join('\n')
   });
 }

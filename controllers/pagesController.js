@@ -5,6 +5,9 @@ const { isValidSlug } = require('../services/slug');
 const { getAgent } = require('../services/agentCache');
 const { renderAgentPage, esc } = require('../services/renderPage');
 const { URBAN_WEB, siteOptions } = require('../services/urbanWeb');
+const { renderPrivacyPage } = require('../services/privacyText');
+const { renderTermsPage } = require('../services/termsText');
+const { renderOwnerLegal, esc: escHtml, impressumUrl } = require('../services/legalDocs');
 
 const view = (name) => fs.readFileSync(path.join(__dirname, '..', 'views', name), 'utf8');
 const REVIEW_FORM = view('review-form.html'); // the editable agent form, shared by /create and /edit
@@ -15,14 +18,21 @@ const EDIT_HTML = fill(view('edit.html'));
 
 const baseUrl = (req) => (process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
 
+// Links in the footer of the create and edit pages: terms of use and, if configured, the operator's legal notice (Impressum)
+function legalFoot() {
+  const imp = impressumUrl();
+  return ' · <a id="terms-link" href="/terms" data-i18n="termsLink">Terms of use</a>'
+    + (imp ? ` · <a id="impressum-link" href="${escHtml(imp)}" target="_blank" rel="noopener" data-i18n="impressumLink">Legal notice</a>` : '');
+}
+
 function createPage(req, res) {
-  res.type('html').send(CREATE_HTML);
+  res.type('html').send(CREATE_HTML.replace('%%LEGAL_FOOT%%', legalFoot()));
 }
 
 // GET /edit/:slug : owner page. The owner key is in the URL fragment (#...), which is never sent to the server.
 function editPage(req, res) {
   const support = esc(process.env.SUPPORT_EMAIL || '');
-  res.type('html').send(EDIT_HTML.replace(/%%SUPPORT_EMAIL%%/g, support));
+  res.type('html').send(EDIT_HTML.replace(/%%SUPPORT_EMAIL%%/g, support).replace('%%LEGAL_FOOT%%', legalFoot()));
 }
 
 // GET /a/:slug : same shell for everyone, filled with this company's branding
@@ -54,4 +64,35 @@ function homePage(req, res) {
   res.type('html').send(renderAgentPage(URBAN_WEB, { lang, baseUrl: base, site: siteOptions(base) }));
 }
 
-module.exports = { homePage, createPage, editPage, agentPage };
+// GET /privacy : privacy policy of the service, linked from every page. Static text, no database.
+function privacyPage(req, res) {
+  const q = req.query.lang;
+  const lang = LANGS.includes(q) ? q : (req.acceptsLanguages(...LANGS) || 'en');
+  res.set('Vary', 'Accept-Language').type('html').send(renderPrivacyPage(lang));
+}
+
+// GET /terms : terms of use for company owners
+function termsPage(req, res) {
+  const q = req.query.lang;
+  const lang = LANGS.includes(q) ? q : (req.acceptsLanguages(...LANGS) || 'en');
+  res.set('Vary', 'Accept-Language').type('html').send(renderTermsPage(lang));
+}
+
+// GET /a/:slug/legal : the company's own legal notice, if its owner wrote it as text (a link is shown directly on the agent page)
+async function agentLegalPage(req, res) {
+  const slug = String(req.params.slug || '');
+  let agent = null;
+  try {
+    agent = isValidSlug(slug) ? await getAgent(slug) : null;
+  } catch (err) {
+    console.error('Legal page lookup failed:', err.message);
+    return res.status(503).type('text').send('Service temporarily unavailable. Try again in a moment.');
+  }
+  if (!agent || (!agent.legalText && !agent.legalUrl)) return res.status(404).type('text').send('Not found');
+  if (agent.legalUrl) return res.redirect(302, agent.legalUrl);
+  const q = req.query.lang;
+  const lang = LANGS.includes(q) ? q : (req.acceptsLanguages(...LANGS) || agent.language || 'en');
+  res.set('Vary', 'Accept-Language').type('html').send(renderOwnerLegal(lang, agent.name, agent.legalText));
+}
+
+module.exports = { homePage, createPage, editPage, agentPage, agentLegalPage, privacyPage, termsPage };

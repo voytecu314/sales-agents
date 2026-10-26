@@ -15,6 +15,12 @@
       <label><span data-i18n="rNotify">E-mail for contact requests (optional)</span><input id="r-notify" type="email" maxlength="254" autocomplete="off"></label>
       <p class="hint suggest" id="r-notify-suggest" data-i18n="rNotifySuggest" hidden></p>
       <p class="hint" id="r-notify-hint" data-i18n="rNotifyHint">Visitors can ask your team to contact them. We first send a confirmation link to this address.</p>
+      <fieldset class="legal">
+        <legend data-i18n="rLegal">Legal notice of your company (Impressum)</legend>
+        <label><span data-i18n="rLegalUrl">Link to your legal notice</span><input id="r-legal-url" type="url" maxlength="300" placeholder="https://" autocomplete="off"></label>
+        <label><span data-i18n="rLegalText">or the text of your legal notice</span><textarea id="r-legal-text" rows="4" maxlength="1500"></textarea></label>
+        <p class="hint" data-i18n="rLegalHint">Shown in the footer of your agent's page. Required if your agent addresses customers in Germany or another country that asks for it. A link wins if you fill in both.</p>
+      </fieldset>
       <fieldset class="colors">
         <legend data-i18n="rColors">Colors</legend>
         <label><input type="color" id="c-accent"><span>Accent</span></label>
