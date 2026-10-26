@@ -6,6 +6,8 @@ const { validateAgent } = require('../services/agentSchema');
 const { normalizeCompanyInput, generatePrompt } = require('../services/metaPrompt');
 const { moderate, textOf } = require('../services/moderation');
 const { sendVerification, verifyToken } = require('../services/mailer');
+const { pick, verifyPageTexts } = require('../services/mailTexts');
+const { LANGS } = require('../services/i18n');
 const { invalidate } = require('../services/agentCache');
 const { peek, hit, dailyKey } = require('../services/counters');
 const { baseUrl, DAILY_CAP } = require('./agentsController');
@@ -35,7 +37,7 @@ async function owner(req, res) {
       keyExpiresAt: req.keyExpiresAt,
       url: `${baseUrl(req)}/a/${a.slug}`,
       usage: { today, cap: DAILY_CAP() },
-      leads: leads.map((l) => ({ name: l.name, email: l.email, message: l.message, lang: l.lang, createdAt: l.createdAt }))
+      leads: leads.map((l) => ({ name: l.name, email: l.email, message: l.message, lang: l.lang, context: l.context || [], createdAt: l.createdAt }))
     });
   } catch (err) {
     console.error('Owner load failed:', err.message);
@@ -89,13 +91,14 @@ async function update(req, res) {
       set.inputs = inputs;
       if (inputs.language !== 'auto') set.language = inputs.language;
     }
+    if (LANGS.includes(req.body?.lang)) set.ownerLang = req.body.lang; // follows the language the owner currently works in
     if (emailChanged) set.notifyEmailVerified = false;   // a new address must be confirmed first
 
     await Agent.updateOne({ slug: old.slug }, { $set: set }); // slug, plan and key hash are never taken from the request
     invalidate(old.slug);
 
     if (emailChanged && value.notifyEmail) {
-      await sendVerification({ slug: old.slug, name: value.name, notifyEmail: value.notifyEmail }, baseUrl(req)).catch((e) => console.error('Verification mail failed:', e.message));
+      await sendVerification({ slug: old.slug, name: value.name, notifyEmail: value.notifyEmail, lang: set.ownerLang || old.ownerLang || old.language }, baseUrl(req)).catch((e) => console.error('Verification mail failed:', e.message));
     }
     res.json({ ok: true, emailVerificationSent: Boolean(emailChanged && value.notifyEmail), instructionsRewritten: inputsChanged, colorsAdjusted: notes.includes('palette') });
   } catch (err) {
@@ -118,21 +121,23 @@ async function remove(req, res) {
 
 // GET /api/agents/:slug/verify-email?e=...&t=...  (link from the confirmation e-mail)
 async function verifyEmail(req, res) {
-  const page = (msg, code = 200) => res.status(code).type('html').send(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>E-mail</title><body style="font:16px system-ui;background:#0f0a1f;color:#f1edff;display:grid;place-items:center;min-height:100vh;margin:0"><p>${msg}</p></body>`);
+  const lang = pick(req.query.l); // language of the confirmation mail, taken from the link
+  const x = verifyPageTexts(lang);
+  const page = (msg, code = 200) => res.status(code).type('html').send(`<!doctype html><html lang="${lang}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${x.title}</title><body style="font:16px system-ui;background:#0f0a1f;color:#f1edff;display:grid;place-items:center;min-height:100vh;margin:0"><p>${msg}</p></body>`);
   const slug = String(req.params.slug || '');
   const email = String(req.query.e || '').toLowerCase();
   const token = String(req.query.t || '');
   const expected = verifyToken(slug, email);
   if (!isValidSlug(slug) || !expected || token.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))) {
-    return page('This confirmation link is not valid.', 400);
+    return page(x.invalid, 400);
   }
   try {
     const r = await Agent.updateOne({ slug, notifyEmail: email }, { $set: { notifyEmailVerified: true } }); // only if it is still the current address
     invalidate(slug);
-    return r.matchedCount ? page('Thank you, your e-mail address is confirmed. Contact requests will now be sent to it.') : page('This address is no longer used by the agent.', 400);
+    return r.matchedCount ? page(x.ok) : page(x.gone, 400);
   } catch (err) {
     console.error('Verify failed:', err.message);
-    return page('Service temporarily unavailable. Please try the link again in a moment.', 503);
+    return page(x.unavailable, 503);
   }
 }
 

@@ -50,10 +50,11 @@ async function create(req, res) {
     if (!verdict.ok) return res.status(400).json({ error: `This agent cannot be published: ${verdict.reason}. Please change your description.` });
 
     if (!(await Draft.findOneAndDelete({ draftId }))) return res.status(400).json({ error: 'This draft was already published.' }); // single use
-    const { slug, editToken, keyExpiresAt } = await createAgent(value, { systemPrompt: draft.systemPrompt, inputs: draft.inputs });
+    const ownerLang = LANGS.includes(req.body?.lang) ? req.body.lang : value.language; // the language the owner created the agent in
+    const { slug, editToken, keyExpiresAt } = await createAgent(value, { systemPrompt: draft.systemPrompt, inputs: draft.inputs, ownerLang });
     const base = baseUrl(req);
     if (value.notifyEmail) {
-      await sendVerification({ slug, name: value.name, notifyEmail: value.notifyEmail }, base).catch((e) => console.error('Verification mail failed:', e.message));
+      await sendVerification({ slug, name: value.name, notifyEmail: value.notifyEmail, lang: ownerLang }, base).catch((e) => console.error('Verification mail failed:', e.message));
     }
     res.status(201).json({ slug, url: `${base}/a/${slug}`, editToken, editUrl: `${base}/edit/${slug}#${editToken}`, keyExpiresAt, colorsAdjusted: notes.includes('palette') });
   } catch (err) {

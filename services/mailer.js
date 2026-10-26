@@ -1,5 +1,6 @@
 // E-mail via SMTP (nodemailer). Without SMTP_HOST nothing is sent: leads are still stored in the database.
 const crypto = require('crypto');
+const { pick, verificationMail, leadMail, languageName, conversationText } = require('./mailTexts');
 
 let transport;
 function getTransport() {
@@ -32,24 +33,25 @@ const verifyToken = (slug, email) => {
   return crypto.createHmac('sha256', secret).update(`${slug}|${String(email).toLowerCase()}`).digest('hex');
 };
 
-async function sendVerification(agent, baseUrl) {
+// The link carries the owner's language (l=), so the page behind it answers in the same language. It is not part of the signature.
+function verificationLink(agent, baseUrl) {
   const token = verifyToken(agent.slug, agent.notifyEmail);
-  if (!token) { console.error('EMAIL_VERIFY_SECRET is not set: cannot verify e-mail addresses'); return false; }
-  const link = `${baseUrl}/api/agents/${agent.slug}/verify-email?e=${encodeURIComponent(agent.notifyEmail)}&t=${token}`;
-  return sendMail({
-    to: agent.notifyEmail,
-    subject: `Confirm your e-mail for "${agent.name}"`,
-    text: `Someone (hopefully you) asked to receive contact requests of the AI sales agent "${agent.name}" at this address.\n\nConfirm here:\n${link}\n\nIf this was not you, ignore this message. Nothing will be sent to you.`
-  });
+  if (!token) return null;
+  return `${baseUrl}/api/agents/${agent.slug}/verify-email?e=${encodeURIComponent(agent.notifyEmail)}&t=${token}&l=${pick(agent.lang)}`;
 }
 
+// agent = { slug, name, notifyEmail, lang }
+async function sendVerification(agent, baseUrl) {
+  const link = verificationLink(agent, baseUrl);
+  if (!link) { console.error('EMAIL_VERIFY_SECRET is not set: cannot verify e-mail addresses'); return false; }
+  const { subject, text } = verificationMail(agent.lang, agent.name, link);
+  return sendMail({ to: agent.notifyEmail, subject, text });
+}
+
+// Written in the owner's language (ownerLang; agents from before that field existed use their main language).
 async function sendLead(agent, lead, baseUrl) {
-  return sendMail({
-    to: agent.notifyEmail,
-    replyTo: lead.email,
-    subject: `New contact request via ${agent.name}`,
-    text: `New contact request from your AI sales agent "${agent.name}".\n\nName: ${lead.name}\nEmail: ${lead.email}\nLanguage: ${lead.lang}\nMessage: ${lead.message || '-'}\n\nAgent: ${baseUrl}/a/${agent.slug}\n\nYou receive this because ${agent.notifyEmail} was confirmed as the contact address of this agent. The visitor agreed to be contacted.`
-  });
+  const { subject, text } = leadMail(agent.ownerLang || agent.language, agent.name, lead, `${baseUrl}/a/${agent.slug}`, agent.notifyEmail);
+  return sendMail({ to: agent.notifyEmail, replyTo: lead.email, subject, text });
 }
 
 // Contact request from the Urban Web site itself. The recipient comes from the server's own configuration
@@ -59,8 +61,13 @@ async function sendSiteLead({ to, lead }) {
     to,
     replyTo: lead.email,
     subject: `New contact request via the Urban Web assistant`,
-    text: `New contact request from the Urban Web AI sales assistant.\n\nName: ${lead.name}\nEmail: ${lead.email}\nLanguage: ${lead.lang}\nMessage: ${lead.message || '-'}\n\nThe visitor agreed to be contacted about this request.`
+    text: [
+      'New contact request from the Urban Web AI sales assistant.', '',
+      `Name: ${lead.name}`, `Email: ${lead.email}`, `Visitor's language: ${languageName('en', lead.lang)}`, `Message: ${lead.message || '-'}`,
+      ...(lead.context?.length ? ['', 'Conversation so far (latest messages):', conversationText('en', lead.context)] : []),
+      '', 'The visitor agreed to be contacted about this request and to share this conversation.'
+    ].join('\n')
   });
 }
 
-module.exports = { sendMail, sendVerification, sendLead, sendSiteLead, verifyToken };
+module.exports = { sendMail, sendVerification, verificationLink, sendLead, sendSiteLead, verifyToken };

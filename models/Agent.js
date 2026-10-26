@@ -19,6 +19,7 @@ const agentSchema = new mongoose.Schema({
   hasLogo: { type: Boolean, default: false },
   logoVersion: { type: Number, default: 0 },                   // changes with every new logo (cache busting)
   language: { type: String, enum: LANGS, default: 'en' },   // main language of the company
+  ownerLang: { type: String, enum: LANGS },                  // language the owner works in: e-mails and pages sent to the owner use it
   palette: {
     accent: String, accent2: String, accent3: String, bg: String, panel: String
   },

@@ -8,7 +8,8 @@ const leadSchema = new mongoose.Schema({
   name: { type: String, required: true, maxlength: 100 },
   email: { type: String, required: true, maxlength: 254 },
   message: { type: String, default: '', maxlength: 1000 },
-  lang: { type: String, default: 'en' },
+  lang: { type: String, default: 'en' },                       // language the visitor used
+  context: { type: [new mongoose.Schema({ role: { type: String, enum: ['user', 'assistant'] }, text: { type: String, maxlength: 600 } }, { _id: false })], default: [] }, // last chat messages, sent with the form
   emailed: { type: Boolean, default: false },
   expireAt: { type: Date, default: () => new Date(Date.now() + RETENTION_DAYS * 86_400_000), index: { expires: 0 } }
 }, { timestamps: { createdAt: true, updatedAt: false } });

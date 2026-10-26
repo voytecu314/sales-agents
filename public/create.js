@@ -1,6 +1,6 @@
 // Onboarding: describe company -> review generated agent -> publish.
 // Shared form logic and texts live in agent-form.js.
-const { t, $, fill, collect, applyUi, request, showError, onUiChange, getInputs, syncLogo, logoSelected } = window.AgentForm;
+const { t, getUi, $, fill, collect, applyUi, request, showError, onUiChange, getInputs, syncLogo, logoSelected } = window.AgentForm;
 let draftId = '';
 
 function show(step) {
@@ -38,7 +38,7 @@ $('step-review').addEventListener('submit', async (e) => {
   btn.disabled = true; btn.textContent = t('publishing');
   try {
     const wantsLogo = logoSelected();
-    const out = await request('POST', '/api/agents', { draftId, agent: collect() });
+    const out = await request('POST', '/api/agents', { draftId, agent: collect(), lang: getUi() });
     $('d-logo-note').hidden = true;
     $('d-color-note').textContent = t('colorsAdjusted');
     $('d-color-note').hidden = !out.colorsAdjusted;

@@ -82,7 +82,7 @@ test('parseLead: honeypot, missing consent, bad e-mail, clean value', () => {
   assert.ok(parseLead({ name: 'Ann', email: 'nope', consent: true }).error);
   assert.ok(parseLead({ name: '', email: 'ann@example.com', consent: true }).error);
   const ok = parseLead({ name: ' Ann\r\nBcc: x ', email: 'ANN@Example.com', message: 'Hi\nthere', consent: 'yes', lang: 'de' });
-  assert.deepEqual(ok.value, { name: 'Ann Bcc: x', email: 'ann@example.com', message: 'Hi\nthere', lang: 'de' });
+  assert.deepEqual(ok.value, { name: 'Ann Bcc: x', email: 'ann@example.com', message: 'Hi\nthere', lang: 'de', context: [] });
   assert.equal(parseLead({ name: 'A', email: 'a@b.co', consent: true, lang: 'xx' }).value.lang, 'en');
 });
 
@@ -158,4 +158,120 @@ test('suggestEmail: contact options first, skips placeholders and no-reply, empt
   assert.equal(suggestEmail({ description: 'no address here', offer: 'x@y' }), '');
   assert.equal(suggestEmail({}), '');
   assert.equal(suggestEmail(undefined), '');
+});
+
+/* ---------- mails and pages for the agent owner, in the owner's language ---------- */
+test('mailTexts: en/de/pl differ, unknown language falls back to English, names and links are kept', () => {
+  const { verificationMail, leadMail, verifyPageTexts, pick } = require('../services/mailTexts');
+  const lead = { name: 'Ann', email: 'ann@example.com', lang: 'en', message: 'Hi' };
+  const subjects = new Set();
+  for (const l of ['en', 'de', 'pl']) {
+    const v = verificationMail(l, 'Acme', 'https://x/verify');
+    assert.ok(v.subject.includes('Acme') && v.text.includes('https://x/verify'));
+    const m = leadMail(l, 'Acme', lead, 'https://x/a/acme', 'me@acme.de');
+    assert.ok(m.text.includes('ann@example.com') && m.text.includes('https://x/a/acme') && m.text.includes('me@acme.de'));
+    subjects.add(v.subject).add(m.subject);
+    assert.ok(verifyPageTexts(l).ok.length > 20);
+  }
+  assert.equal(subjects.size, 6);
+  assert.deepEqual(verificationMail('xx', 'Acme', 'L'), verificationMail('en', 'Acme', 'L'));
+  assert.equal(pick(undefined), 'en');
+  assert.notEqual(verifyPageTexts('de').invalid, verifyPageTexts('pl').invalid);
+});
+
+test('verification link: carries the owner language, signature does not depend on it', () => {
+  const saved = process.env.EMAIL_VERIFY_SECRET;
+  process.env.EMAIL_VERIFY_SECRET = 'test-secret';
+  try {
+    const { verificationLink } = require('../services/mailer');
+    const a = { slug: 'acme', notifyEmail: 'me@acme.de', name: 'Acme' };
+    const de = verificationLink({ ...a, lang: 'de' }, 'https://x');
+    const pl = verificationLink({ ...a, lang: 'pl' }, 'https://x');
+    assert.match(de, /&l=de$/);
+    assert.match(pl, /&l=pl$/);
+    assert.equal(de.replace(/&l=de$/, ''), pl.replace(/&l=pl$/, ''));
+    assert.match(verificationLink({ ...a, lang: 'zz' }, 'https://x'), /&l=en$/);
+    delete process.env.EMAIL_VERIFY_SECRET;
+    assert.equal(verificationLink(a, 'https://x'), null);
+  } finally {
+    if (saved === undefined) delete process.env.EMAIL_VERIFY_SECRET; else process.env.EMAIL_VERIFY_SECRET = saved;
+  }
+});
+
+test('mailer: confirmation and lead mails are sent in the owner language (SMTP replaced by a fake)', async () => {
+  const Module = require('module');
+  const sent = [];
+  const origLoad = Module._load;
+  const savedHost = process.env.SMTP_HOST;
+  const savedSecret = process.env.EMAIL_VERIFY_SECRET;
+  Module._load = function (request, ...rest) {
+    return request === 'nodemailer' ? { createTransport: () => ({ sendMail: async (m) => { sent.push(m); } }) } : origLoad.call(this, request, ...rest);
+  };
+  process.env.SMTP_HOST = 'smtp.fake';
+  process.env.EMAIL_VERIFY_SECRET = 'test-secret';
+  try {
+    delete require.cache[require.resolve('../services/mailer')]; // the mailer caches its SMTP transport: start with a fresh one
+    const { sendVerification, sendLead } = require('../services/mailer');
+    const agent = { slug: 'acme', name: 'Acme', notifyEmail: 'me@acme.de' };
+    assert.equal(await sendVerification({ ...agent, lang: 'pl' }, 'https://x'), true);
+    assert.match(sent[0].subject, /^Potwierdź/);
+    assert.match(sent[0].text, /&l=pl/);
+    const lead = { name: 'Ann', email: 'ann@example.com', lang: 'en', message: '' };
+    await sendLead({ ...agent, ownerLang: 'de', language: 'pl' }, lead, 'https://x');
+    assert.match(sent[1].subject, /^Neue Kontaktanfrage/);
+    await sendLead({ ...agent, language: 'pl' }, lead, 'https://x'); // older agent without ownerLang
+    assert.match(sent[2].subject, /^Nowe zgłoszenie/);
+    assert.equal(sent[2].replyTo, 'ann@example.com');
+  } finally {
+    Module._load = origLoad;
+    if (savedHost === undefined) delete process.env.SMTP_HOST; else process.env.SMTP_HOST = savedHost;
+    if (savedSecret === undefined) delete process.env.EMAIL_VERIFY_SECRET; else process.env.EMAIL_VERIFY_SECRET = savedSecret;
+  }
+});
+
+/* ---------- conversation context in lead mails ---------- */
+test('parseContext: keeps the latest messages, drops junk, cuts long texts, strips control characters', () => {
+  const { parseContext } = require('../services/leadInput');
+  assert.deepEqual(parseContext('x'), []);
+  assert.deepEqual(parseContext([null, { role: 'system', content: 'x' }, { role: 'user', content: 5 }, { role: 'user', content: '  ' }]), []);
+  const many = Array.from({ length: 30 }, (_, i) => ({ role: i % 2 ? 'assistant' : 'user', content: `m${i}` }));
+  const out = parseContext(many);
+  assert.equal(out.length, 12);
+  assert.equal(out.at(-1).text, 'm29');
+  assert.equal(parseContext([{ role: 'user', content: 'a'.repeat(5000) }])[0].text.length, 600);
+  assert.equal(parseContext([{ role: 'user', content: 'Hi\r\nBcc: x\u0000' }])[0].text, 'Hi Bcc: x');
+});
+
+test('lead mail: visitor language named and conversation included, in the owner language', () => {
+  const { leadMail, languageName } = require('../services/mailTexts');
+  const lead = { name: 'Ann', email: 'ann@example.com', lang: 'pl', message: 'Hi', context: [{ role: 'user', text: 'Ile kosztuje strona?' }, { role: 'assistant', text: 'Zależy od zakresu.' }] };
+  const de = leadMail('de', 'Acme', lead, 'https://x/a/acme', 'me@acme.de');
+  assert.match(de.text, /Sprache des Besuchers: Polnisch \(pl\)/);
+  assert.match(de.text, /Bisheriges Gespräch[^\n]*:\nBesucher: Ile kosztuje strona\?\nAgent: Zależy od zakresu\./);
+  assert.match(de.text, /dieses Gespräch weiterzugeben/);
+  assert.match(leadMail('pl', 'Acme', lead, 'u', 'a@b.pl').text, /Język odwiedzającego: polski \(pl\)/);
+  assert.match(leadMail('en', 'Acme', { ...lead, lang: 'de' }, 'u', 'a@b.co').text, /Visitor's language: German \(de\)/);
+  assert.ok(!leadMail('en', 'Acme', { ...lead, context: [] }, 'u', 'a@b.co').text.includes('Conversation so far'));
+  assert.equal(languageName('en', 'xx'), 'xx (xx)');
+});
+
+test('site lead mail (to the Urban Web owner) includes language and conversation', async () => {
+  const Module = require('module');
+  const sent = [];
+  const origLoad = Module._load;
+  const savedHost = process.env.SMTP_HOST;
+  Module._load = function (request, ...rest) {
+    return request === 'nodemailer' ? { createTransport: () => ({ sendMail: async (m) => { sent.push(m); } }) } : origLoad.call(this, request, ...rest);
+  };
+  process.env.SMTP_HOST = 'smtp.fake';
+  try {
+    delete require.cache[require.resolve('../services/mailer')]; // the mailer caches its SMTP transport: start with a fresh one
+    const { sendSiteLead } = require('../services/mailer');
+    await sendSiteLead({ to: 'me@uw.de', lead: { name: 'Ann', email: 'ann@example.com', lang: 'de', message: '', context: [{ role: 'user', text: 'Hallo' }] } });
+    assert.match(sent[0].text, /Visitor's language: German \(de\)/);
+    assert.match(sent[0].text, /Visitor: Hallo/);
+  } finally {
+    Module._load = origLoad;
+    if (savedHost === undefined) delete process.env.SMTP_HOST; else process.env.SMTP_HOST = savedHost;
+  }
 });

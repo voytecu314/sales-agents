@@ -122,7 +122,8 @@ async function sendLead(f) {
   const fd = new FormData(f);
   const body = {
     name: fd.get('name') || '', email: fd.get('email') || '', message: fd.get('message') || '',
-    consent: fd.get('consent') === 'yes', website: fd.get('website') || '', lang
+    consent: fd.get('consent') === 'yes', website: fd.get('website') || '', lang,
+    context: history.slice(-12) // the team sees the conversation so far (the form says so)
   };
   f.nextElementSibling?.classList.contains('lead-error') && f.nextElementSibling.remove();
   lockForm(f, true);
@@ -153,6 +154,9 @@ function addHoneypots(root) {
     hp.type = 'text'; hp.name = 'website'; hp.className = 'hp'; hp.tabIndex = -1;
     hp.autocomplete = 'off'; hp.setAttribute('aria-hidden', 'true');
     f.append(hp);
+    const note = document.createElement('p'); // tells the visitor that the conversation goes along (set by the page, not by the AI)
+    note.className = 'lead-note'; note.textContent = t('leadContextNote');
+    f.append(note);
     f.dataset.hp = '1';
   });
 }

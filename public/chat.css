@@ -82,6 +82,7 @@ form.ask.answered .choice, form.ask.answered .choice input { cursor: default; }
 /* agent page footer, spam trap */
 .foot { text-align: center; color: var(--muted); font-size: .8rem; padding: 4px 0 18px; }
 .linklike { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; }
+.lead-note { margin: 8px 0 0; font-size: .82rem; color: var(--muted); }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 
 /* logo in the agent header */

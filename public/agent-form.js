@@ -19,7 +19,7 @@ const TEXT = {
     rNotify: 'E-mail for contact requests (optional)', rNotifyHint: 'Contact requests are always saved and listed on your edit page. Add an e-mail to also get them by mail; we first send a confirmation link to this address.',
     editTitle: 'Edit your AI sales agent', keyLabel: 'Owner key', keyGo: 'Open', eStatus: 'Status', sActive: 'Online', sPaused: 'Paused (visitors see "unavailable")',
     save: 'Save changes', saving: 'Saving…', saved: 'Saved.', delete: 'Delete agent', deleteConfirm: 'Delete this agent and all its contact requests? This cannot be undone.',
-    leadsTitle: 'Contact requests', leadsHint: 'The last 50 requests. They are deleted automatically after 90 days.', noLeads: 'No requests yet.',
+    leadsTitle: 'Contact requests', leadConvo: 'Conversation', leadVisitor: 'Visitor', leadAgent: 'Agent', leadsHint: 'The last 50 requests. They are deleted automatically after 90 days.', noLeads: 'No requests yet.',
     usage: 'Messages today: {n} of {cap}', verifyPending: 'Not confirmed yet: open the link we sent to this address. Until then requests are only stored here, not e-mailed.',
     verifyOk: 'Address confirmed. New requests are e-mailed to it.', verifySent: 'Saved. We sent a confirmation link to the new address.', authError: 'This owner key is not valid.',
     title: 'Create your AI sales agent', subtitle: 'Describe your company in your own words. You get a sales agent on its own link.',
@@ -52,7 +52,7 @@ const TEXT = {
     rNotify: 'E-Mail für Kontaktanfragen (optional)', rNotifyHint: 'Kontaktanfragen werden immer gespeichert und auf Ihrer Bearbeitungsseite angezeigt. Mit einer E-Mail-Adresse erhalten Sie sie zusätzlich per Mail; wir senden zuerst einen Bestätigungslink.',
     editTitle: 'KI-Verkaufsagenten bearbeiten', keyLabel: 'Besitzer-Schlüssel', keyGo: 'Öffnen', eStatus: 'Status', sActive: 'Online', sPaused: 'Pausiert (Besucher sehen „nicht verfügbar“)',
     save: 'Änderungen speichern', saving: 'Wird gespeichert…', saved: 'Gespeichert.', delete: 'Agenten löschen', deleteConfirm: 'Diesen Agenten und alle Kontaktanfragen löschen? Das lässt sich nicht rückgängig machen.',
-    leadsTitle: 'Kontaktanfragen', leadsHint: 'Die letzten 50 Anfragen. Sie werden nach 90 Tagen automatisch gelöscht.', noLeads: 'Noch keine Anfragen.',
+    leadsTitle: 'Kontaktanfragen', leadConvo: 'Gespräch', leadVisitor: 'Besucher', leadAgent: 'Agent', leadsHint: 'Die letzten 50 Anfragen. Sie werden nach 90 Tagen automatisch gelöscht.', noLeads: 'Noch keine Anfragen.',
     usage: 'Nachrichten heute: {n} von {cap}', verifyPending: 'Noch nicht bestätigt: Öffnen Sie den Link, den wir an diese Adresse gesendet haben. Bis dahin werden Anfragen nur hier gespeichert, nicht per E-Mail verschickt.',
     verifyOk: 'Adresse bestätigt. Neue Anfragen werden per E-Mail an sie gesendet.', verifySent: 'Gespeichert. Wir haben einen Bestätigungslink an die neue Adresse gesendet.', authError: 'Dieser Besitzer-Schlüssel ist ungültig.',
     title: 'Erstellen Sie Ihren KI-Verkaufsagenten', subtitle: 'Beschreiben Sie Ihr Unternehmen. Sie erhalten einen Verkaufsagenten unter eigenem Link.',
@@ -85,7 +85,7 @@ const TEXT = {
     rNotify: 'E-mail do zgłoszeń kontaktowych (opcjonalnie)', rNotifyHint: 'Zgłoszenia kontaktowe są zawsze zapisywane i widoczne na stronie edycji. Dodaj e-mail, aby dostawać je także pocztą; najpierw wyślemy na ten adres link potwierdzający.',
     editTitle: 'Edytuj agenta sprzedaży AI', keyLabel: 'Klucz właściciela', keyGo: 'Otwórz', eStatus: 'Status', sActive: 'Online', sPaused: 'Wstrzymany (odwiedzający widzą „niedostępny”)',
     save: 'Zapisz zmiany', saving: 'Zapisywanie…', saved: 'Zapisano.', delete: 'Usuń agenta', deleteConfirm: 'Usunąć tego agenta i wszystkie zgłoszenia kontaktowe? Tego nie da się cofnąć.',
-    leadsTitle: 'Zgłoszenia kontaktowe', leadsHint: 'Ostatnie 50 zgłoszeń. Po 90 dniach są usuwane automatycznie.', noLeads: 'Brak zgłoszeń.',
+    leadsTitle: 'Zgłoszenia kontaktowe', leadConvo: 'Rozmowa', leadVisitor: 'Odwiedzający', leadAgent: 'Agent', leadsHint: 'Ostatnie 50 zgłoszeń. Po 90 dniach są usuwane automatycznie.', noLeads: 'Brak zgłoszeń.',
     usage: 'Wiadomości dzisiaj: {n} z {cap}', verifyPending: 'Jeszcze niepotwierdzony: otwórz link wysłany na ten adres. Do tego czasu zgłoszenia są tylko zapisywane tutaj, bez wysyłki e-mailem.',
     verifyOk: 'Adres potwierdzony. Nowe zgłoszenia są wysyłane na ten adres.', verifySent: 'Zapisano. Wysłaliśmy link potwierdzający na nowy adres.', authError: 'Ten klucz właściciela jest nieprawidłowy.',
     title: 'Stwórz swojego agenta sprzedaży AI', subtitle: 'Opisz swoją firmę. Dostaniesz agenta sprzedaży pod własnym linkiem.',
@@ -281,5 +281,5 @@ const TEXT = {
     logo.base64 = null; logo.remove = false;
   }
 
-  window.AgentForm = { getInputs, setInputs, syncLogo, hasLogoChange: () => Boolean(logo.base64 || logo.remove), logoSelected: () => Boolean(logo.base64), t, $, fill, collect, applyUi, request, showError, showNotice, onUiChange: (fn) => listeners.push(fn) };
+  window.AgentForm = { getInputs, setInputs, syncLogo, hasLogoChange: () => Boolean(logo.base64 || logo.remove), logoSelected: () => Boolean(logo.base64), t, getUi: () => ui, $, fill, collect, applyUi, request, showError, showNotice, onUiChange: (fn) => listeners.push(fn) };
 })();

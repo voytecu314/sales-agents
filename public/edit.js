@@ -1,6 +1,6 @@
 // Owner page: /edit/:slug#<owner key>. The key is read from the URL fragment (never sent to the server
 // in the address), moved to sessionStorage for this tab, and sent as a Bearer header.
-const { t, $, fill, collect, applyUi, request, showError, showNotice, onUiChange, getInputs, setInputs, syncLogo, hasLogoChange } = window.AgentForm;
+const { t, getUi, $, fill, collect, applyUi, request, showError, showNotice, onUiChange, getInputs, setInputs, syncLogo, hasLogoChange } = window.AgentForm;
 
 const slug = location.pathname.split('/')[2] || '';
 const STORE_KEY = 'sa_owner_' + slug;
@@ -58,6 +58,15 @@ function renderLeads() {
     const msg = document.createElement('p');
     msg.textContent = l.message || '';
     card.append(head, when, msg);
+    if (l.context?.length) { // the chat before the request, as text only
+      const d = document.createElement('details');
+      const sum = document.createElement('summary');
+      sum.textContent = t('leadConvo');
+      const body = document.createElement('p');
+      body.textContent = l.context.map((m) => `${m.role === 'user' ? t('leadVisitor') : t('leadAgent')}: ${m.text}`).join('\n');
+      d.append(sum, body);
+      card.append(d);
+    }
     box.append(card);
   }
 }
@@ -104,7 +113,7 @@ $('edit-form').addEventListener('submit', async (e) => {
   try {
     const agent = collect();
     agent.status = $('e-status').value;
-    const out = await api('PUT', { agent, inputs: getInputs($('inputs-box')) });
+    const out = await api('PUT', { agent, inputs: getInputs($('inputs-box')), lang: getUi() });
     if (hasLogoChange()) await syncLogo(slug, auth());
     await load();
     showNotice((out.emailVerificationSent ? t('verifySent') : out.instructionsRewritten ? t('rewritten') : t('saved')) + (out.colorsAdjusted ? ' ' + t('colorsAdjusted') : ''));

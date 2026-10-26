@@ -6,6 +6,21 @@ const { LANGS } = require('./i18n');
 const CONTROL = /[\u0000-\u001F\u007F]/g;
 const line = (v, max) => String(v ?? '').replace(CONTROL, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 
+// The conversation so far, sent by the page together with the form (the server keeps no chat history of its own).
+// Untrusted: only the last messages are kept, each cut short; it is shown to the team as plain text, never as HTML.
+const MAX_CONTEXT_MESSAGES = 12;
+const MAX_CONTEXT_CHARS = 600;
+function parseContext(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const m of raw.slice(-MAX_CONTEXT_MESSAGES)) {
+    if (!m || (m.role !== 'user' && m.role !== 'assistant') || typeof m.content !== 'string') continue;
+    const text = line(m.content, MAX_CONTEXT_CHARS);
+    if (text) out.push({ role: m.role, text });
+  }
+  return out;
+}
+
 // -> { honeypot: true } | { error } | { value: { name, email, message, lang } }
 function parseLead(body) {
   const b = body || {};
@@ -17,7 +32,7 @@ function parseLead(body) {
   if (!name || !EMAIL_RE.test(email)) return { error: 'Please enter your name and a valid e-mail address.' };
   if (b.consent !== true && b.consent !== 'yes') return { error: 'Please agree that the company may contact you.' };
 
-  return { value: { name, email, message, lang: LANGS.includes(b.lang) ? b.lang : 'en' } };
+  return { value: { name, email, message, lang: LANGS.includes(b.lang) ? b.lang : 'en', context: parseContext(b.context) } };
 }
 
-module.exports = { parseLead, line };
+module.exports = { parseLead, parseContext, line };
