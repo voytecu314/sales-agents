@@ -1,55 +1,43 @@
-// LLM provider chain: Groq -> OpenRouter -> Requesty, first non-empty answer wins.
+// OpenAI-compatible LLM chain: Groq -> OpenRouter -> Requesty, first non-empty answer wins.
+const { configuredProviders } = require('./providerRegistry');
 const TIMEOUT_MS = Number(process.env.PROVIDER_TIMEOUT_MS) || 60_000;
 
-function withTimeout(promise, ms, label) {
-  let timer;
-  const timeout = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error(`${label} timed out`)), ms); });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+async function askProvider(provider, messages, fetchImpl = fetch) {
+  const response = await fetchImpl(`${provider.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${provider.apiKey}`,
+      ...provider.headers
+    },
+    body: JSON.stringify({ model: provider.model, messages }),
+    signal: AbortSignal.timeout(TIMEOUT_MS)
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(data?.error?.message || `${provider.name} error (${response.status})`);
+  }
+  return data;
 }
 
 async function askChain(messages) {
-  const providers = [
-    { name: 'Groq', run: async () => {
-        const { default: Groq } = await import('groq-sdk');
-        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-        return groq.chat.completions.create({ messages, model: 'openai/gpt-oss-120b' });
-    }},
-    { name: 'OpenRouter', run: async () => {
-        const { OpenRouter } = await import('@openrouter/sdk');
-        const client = new OpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
-        return client.chat.send({ model: 'openai/gpt-oss-120b:free', messages });
-    }},
-    { name: 'Requesty', run: async () => {
-        // OpenAI-compatible endpoint, so plain fetch is enough (no extra SDK needed)
-        const r = await fetch('https://router.requesty.ai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.REQUESTY_API_KEY}` },
-          body: JSON.stringify({
-            model: process.env.REQUESTY_MODEL || 'nvidia/nemotron-3.5-lightning-30b-a3b',
-            messages
-          }),
-          signal: AbortSignal.timeout(TIMEOUT_MS)
-        });
-        const data = await r.json().catch(() => null);
-        if (!r.ok) throw new Error(data?.error?.message || `Requesty error (${r.status})`);
-        return data;
-    }},
-  ];
+  const providers = configuredProviders();
+  if (!providers.length) throw new Error('No LLM provider API keys are configured');
 
   let lastErr;
-  for (const p of providers) {
+  for (const provider of providers) {
     try {
-      const r = await withTimeout(p.run(), TIMEOUT_MS, p.name);
-      const text = r.choices?.[0]?.message?.content;
-      if (!text) throw new Error('empty response');
-      console.log(`Answered by ${p.name}`);
+      const result = await askProvider(provider, messages);
+      const text = result.choices?.[0]?.message?.content;
+      if (typeof text !== 'string' || !text.trim()) throw new Error('empty response');
+      console.log(`Answered by ${provider.name}`);
       return text;
     } catch (err) {
-      console.error(`${p.name} failed:`, err.message);
+      console.error(`${provider.name} failed:`, err.message);
       lastErr = err;
     }
   }
   throw lastErr;
 }
 
-module.exports = { askChain };
+module.exports = { askChain, askProvider };
