@@ -2,6 +2,9 @@
 const Agent = require('../models/Agent');
 const Lead = require('../models/Lead');
 const Logo = require('../models/Logo');
+const ProviderKey = require('../models/ProviderKey');
+const { publicProviders, ownerProviders, saveKey, encryptKey, decryptKey, providerById } = require('../services/keyVault');
+const { testProviderKey } = require('../services/llm');
 const { validateAgent } = require('../services/agentSchema');
 const { normalizeCompanyInput, generatePrompt } = require('../services/metaPrompt');
 const { moderate, textOf } = require('../services/moderation');
@@ -13,6 +16,7 @@ const { peek, hit, dailyKey } = require('../services/counters');
 const { baseUrl, DAILY_CAP } = require('./agentsController');
 const { isValidSlug } = require('../services/slug');
 const crypto = require('crypto');
+const ProviderOAuthState = require('../models/ProviderOAuthState');
 
 const REGEN_DAILY_CAP = 10; // rewrites of the instructions per agent and day (each one is an LLM call)
 
@@ -20,7 +24,7 @@ const REGEN_DAILY_CAP = 10; // rewrites of the instructions per agent and day (e
 const editable = (a) => ({
   name: a.name, emoji: a.emoji || '', language: a.language, palette: a.palette, locales: a.locales,
   legalUrl: a.legalUrl || '', legalText: a.legalText || '',
-  notifyEmail: a.notifyEmail || '', notifyEmailVerified: Boolean(a.notifyEmailVerified), status: a.status,
+  notifyEmail: a.notifyEmail || '', notifyEmailVerified: Boolean(a.notifyEmailVerified), status: a.status, providerDailyCap: a.providerDailyCap || 100,
   logoUrl: a.hasLogo ? `/api/agents/${a.slug}/logo?v=${a.logoVersion || 0}` : null
 });
 
@@ -34,6 +38,8 @@ async function owner(req, res) {
     ]);
     res.json({
       agent: editable(a),
+      providers: publicProviders(),
+      providerKeys: await ownerProviders(a.slug),
       inputs: a.inputs || {},
       keyExpiresAt: req.keyExpiresAt,
       url: `${baseUrl(req)}/a/${a.slug}`,
@@ -68,7 +74,7 @@ async function update(req, res) {
     const forCheck = (a, i) => textOf({ name: a.name, locales: a.locales, inputs: i, legalText: a.legalText, systemPrompt: '' });
     const nextInputs = inputsChanged ? inputs : (old.inputs || {});
     if (forCheck(value, nextInputs) !== forCheck(old, old.inputs || {})) {
-      const verdict = await moderate(forCheck(value, nextInputs));
+      const verdict = await moderate(forCheck(value, nextInputs), (messages) => require('../services/llm').askChain(messages, { slug: old.slug }));
       if (!verdict.ok) return res.status(400).json({ error: `This agent cannot be saved: ${verdict.reason}. Please change your description.` });
     }
 
@@ -87,6 +93,11 @@ async function update(req, res) {
 
     const emailChanged = value.notifyEmail !== (old.notifyEmail || '');
     const set = { ...value, status };
+    if (req.body?.agent?.providerDailyCap !== undefined) {
+      const cap = Number(req.body.agent.providerDailyCap);
+      if (!Number.isInteger(cap) || cap < 1 || cap > 10000) return res.status(400).json({ error: 'Daily provider-key limit must be an integer from 1 to 10000.' });
+      set.providerDailyCap = cap;
+    }
     if (inputsChanged) {
       set.systemPrompt = systemPrompt;
       set.inputs = inputs;
@@ -111,12 +122,110 @@ async function update(req, res) {
 // DELETE /api/agents/:slug : removes the agent and its leads
 async function remove(req, res) {
   try {
-    await Promise.all([Agent.deleteOne({ slug: req.agentDoc.slug }), Lead.deleteMany({ slug: req.agentDoc.slug }), Logo.deleteOne({ slug: req.agentDoc.slug })]);
+    await Promise.all([Agent.deleteOne({ slug: req.agentDoc.slug }), Lead.deleteMany({ slug: req.agentDoc.slug }), Logo.deleteOne({ slug: req.agentDoc.slug }), ProviderKey.deleteMany({ slug: req.agentDoc.slug })]);
     invalidate(req.agentDoc.slug);
     res.json({ ok: true });
   } catch (err) {
     console.error('Owner delete failed:', err.message);
     res.status(500).json({ error: 'Could not delete. Please try again.' });
+  }
+}
+
+
+// GET /api/agents/:slug/keys — metadata only; never return encrypted or plaintext key material.
+async function providerKeys(req, res) {
+  try { res.json({ providers: publicProviders(), keys: await ownerProviders(req.agentDoc.slug) }); }
+  catch (err) { console.error('Provider key list failed:', err.message); res.status(503).json({ error: 'Could not load provider keys.' }); }
+}
+
+// POST /api/agents/:slug/keys { provider, apiKey } — verify with a real request before encrypting.
+async function addProviderKey(req, res) {
+  const definition = providerById(String(req.body?.provider || ''));
+  const apiKey = String(req.body?.apiKey || '').trim();
+  if (!definition) return res.status(400).json({ error: 'Choose a supported provider.' });
+  if (apiKey.length < 8 || apiKey.length > 500) return res.status(400).json({ error: 'Enter a valid API key.' });
+  try {
+    await testProviderKey({ ...definition, baseUrl: process.env[definition.baseUrlEnv] || definition.baseUrl, model: process.env[definition.modelEnv] || definition.model }, apiKey);
+    await saveKey({ slug: req.agentDoc.slug, provider: definition.id, apiKey });
+    res.status(201).json({ ok: true, keys: await ownerProviders(req.agentDoc.slug) });
+  } catch (err) {
+    const status = err.status === 400 ? 400 : 422;
+    console.error('Provider key validation failed:', err.status || 'unknown status');
+    res.status(err.message?.includes('PROVIDER_KEY_ENCRYPTION_SECRET') ? 503 : status).json({ error: err.message?.includes('PROVIDER_KEY_ENCRYPTION_SECRET') ? 'Provider-key encryption is not configured on the server. Please contact the operator.' : err.status === 401 || err.status === 403 ? 'The provider rejected this key. Check it in the provider console.' : err.status === 429 ? 'The provider rate-limited the test. Please wait and try again.' : err.status === 400 ? err.message : 'The provider test failed. Check the key, model access and provider status.' });
+  }
+}
+
+async function removeProviderKey(req, res) {
+  try {
+    const removed = await ProviderKey.findOneAndDelete({ _id: req.params.keyId, slug: req.agentDoc.slug }).lean();
+    if (!removed) return res.status(404).json({ error: 'Provider key not found.' });
+    await ProviderKey.updateMany({ slug: req.agentDoc.slug, position: { $gt: removed.position } }, { $inc: { position: -1 } });
+    res.json({ ok: true, keys: await ownerProviders(req.agentDoc.slug) });
+  } catch (err) { console.error('Provider key removal failed:', err.message); res.status(500).json({ error: 'Could not remove this provider key.' }); }
+}
+
+
+// POST /api/agents/:slug/openrouter/oauth/start — begin a short-lived PKCE connection.
+async function startOpenRouterOAuth(req, res) {
+  try {
+    const verifier = crypto.randomBytes(32).toString('base64url');
+    const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+    const state = crypto.randomBytes(32).toString('base64url');
+    const encryptedVerifier = encryptKey(verifier);
+    const callbackUrl = `${baseUrl(req)}/api/openrouter/oauth/callback`;
+    await ProviderOAuthState.create({
+      slug: req.agentDoc.slug,
+      stateHash: crypto.createHash('sha256').update(state).digest('hex'),
+      verifierCiphertext: encryptedVerifier.ciphertext,
+      verifierIv: encryptedVerifier.iv,
+      verifierAuthTag: encryptedVerifier.authTag,
+      expiresAt: new Date(Date.now() + 10 * 60_000)
+    });
+    const authorize = new URL('https://openrouter.ai/auth');
+    authorize.searchParams.set('callback_url', callbackUrl);
+    authorize.searchParams.set('code_challenge', challenge);
+    authorize.searchParams.set('code_challenge_method', 'S256');
+    authorize.searchParams.set('state', state);
+    authorize.searchParams.set('key_label', `Sales Agent: ${req.agentDoc.name}`.slice(0, 100));
+    res.json({ url: authorize.toString() });
+  } catch (err) {
+    console.error('OpenRouter OAuth start failed:', err.message);
+    res.status(503).json({ error: err.message?.includes('PROVIDER_KEY_ENCRYPTION_SECRET') ? 'Provider-key encryption is not configured on the server. Please contact the operator.' : 'Could not start OpenRouter connection. Please try again.' });
+  }
+}
+
+// GET /api/openrouter/oauth/callback — state is a one-use, random capability created above.
+async function finishOpenRouterOAuth(req, res) {
+  const redirect = (slug, result) => res.redirect(303, `/edit/${encodeURIComponent(slug)}?provider=${encodeURIComponent(result)}`);
+  const state = String(req.query.state || '');
+  if (!state || state.length > 200) return res.status(400).type('text').send('Invalid OpenRouter connection state. Return to your agent edit page and try again.');
+  const stateHash = crypto.createHash('sha256').update(state).digest('hex');
+  let pending;
+  try {
+    pending = await ProviderOAuthState.findOneAndDelete({ stateHash, expiresAt: { $gt: new Date() } }).lean();
+    if (!pending) return res.status(400).type('text').send('This OpenRouter connection has expired or was already used. Return to your agent edit page and try again.');
+    if (req.query.error || !req.query.code) return redirect(pending.slug, 'cancelled');
+    const code = String(req.query.code);
+    if (code.length > 1000) return redirect(pending.slug, 'failed');
+    const verifier = decryptKey({ ciphertext: pending.verifierCiphertext, iv: pending.verifierIv, authTag: pending.verifierAuthTag });
+    const response = await fetch('https://openrouter.ai/api/v1/auth/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, code_verifier: verifier, code_challenge_method: 'S256' }),
+      signal: AbortSignal.timeout(15_000)
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || typeof payload.key !== 'string' || payload.key.length < 8) {
+      console.warn('OpenRouter OAuth exchange failed:', response.status);
+      return redirect(pending.slug, 'failed');
+    }
+    const definition = providerById('openrouter');
+    await testProviderKey({ ...definition, baseUrl: process.env[definition.baseUrlEnv] || definition.baseUrl, model: process.env[definition.modelEnv] || definition.model }, payload.key);
+    await saveKey({ slug: pending.slug, provider: 'openrouter', apiKey: payload.key });
+    return redirect(pending.slug, 'connected');
+  } catch (err) {
+    console.error('OpenRouter OAuth callback failed:', err.message);
+    return pending ? redirect(pending.slug, 'failed') : res.status(503).type('text').send('Could not finish the OpenRouter connection. Return to your agent edit page and try again.');
   }
 }
 
@@ -142,4 +251,4 @@ async function verifyEmail(req, res) {
   }
 }
 
-module.exports = { owner, update, remove, verifyEmail };
+module.exports = { owner, update, remove, verifyEmail, providerKeys, addProviderKey, removeProviderKey, startOpenRouterOAuth, finishOpenRouterOAuth };

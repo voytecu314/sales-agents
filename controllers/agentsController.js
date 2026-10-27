@@ -108,7 +108,7 @@ async function chat(req, res) {
   }
 
   const lang = LANGS.includes(req.body?.lang) ? req.body.lang : null;
-  await respond(res, buildLlmMessages(buildAgentPrompt(agent, lang), parsed.messages), { linkPolicy: buildLinkPolicy(agent.systemPrompt) });
+  await respond(res, buildLlmMessages(buildAgentPrompt(agent, lang), parsed.messages), { linkPolicy: buildLinkPolicy(agent.systemPrompt), llmOptions: { slug: agent.slug } });
 }
 
 module.exports = { generate, create, config, chat, loadAgent, baseUrl, DAILY_CAP };

@@ -39,6 +39,7 @@
         <p class="hint" id="e-usage"></p>
       </div>
       <p class="hint" id="e-expiry"></p>
+      <label><span data-i18n="providerDailyCapLabel">Daily owner-key request limit</span><input id="provider-daily-cap" type="number" min="1" max="10000" step="1" value="100" required></label>
 
       <h2 data-i18n="eInputsTitle">What your agent knows</h2>
       <p class="hint" data-i18n="eInputsHint">Change your description and your agent's instructions are rewritten automatically when you save. The instructions themselves are managed by us.</p>
@@ -54,6 +55,18 @@
         <button class="ghost" type="button" id="delete" data-i18n="delete">Delete agent</button>
       </div>
     </form>
+
+    <section id="provider-keys-box" class="panel-form" hidden>
+      <h2 data-i18n="providerKeysTitle">AI provider keys</h2>
+      <p class="hint" data-i18n="providerKeysHint">Add your own provider API key. It is tested before saving and stored encrypted. Your key is never shown again.</p>
+      <form id="provider-key-form" autocomplete="off">
+        <label><span data-i18n="providerSelect">Provider</span><select id="provider-select" required></select></label>
+        <label><span class="provider-label-row"><span data-i18n="providerApiKey">API key</span><span id="provider-key-help-chip" class="provider-help-chip" tabindex="0" aria-label="Provider API key instructions">i<span id="provider-key-help-tooltip" class="provider-help-tooltip" role="tooltip"></span></span></span><input id="provider-api-key" type="password" autocomplete="new-password" minlength="8" maxlength="500" required></label>
+        <div class="actions-row"><button class="btn" type="submit" id="provider-key-save" data-i18n="providerTestSave">Test and save key</button><button class="ghost" type="button" id="provider-openrouter-connect" data-i18n="providerConnectOpenRouter" hidden>Connect OpenRouter</button></div>
+      </form>
+      <p class="hint" id="provider-key-note" role="status"></p>
+      <div id="provider-key-list"></div>
+    </section>
 
     <section id="link-box" class="panel-form" hidden>
       <h2 data-i18n="linkTitle">Links that start a conversation</h2>

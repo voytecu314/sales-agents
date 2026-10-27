@@ -78,11 +78,17 @@ async function load() {
     fill(data.agent);
     setInputs($('inputs-box'), data.inputs);
     $('e-status').value = data.agent.status;
+    $('provider-daily-cap').value = data.agent.providerDailyCap || 100;
+    renderProviderKeys();
+    if (providerResult === 'connected') showNotice(t('providerOAuthConnected'));
+    else if (providerResult === 'cancelled') showNotice(t('providerOAuthCancelled'));
+    else if (providerResult === 'failed') showError(t('providerOAuthFailed'));
     $('e-url').textContent = data.url;
     $('e-url').href = data.url;
     $('key-form').hidden = true;
     $('edit-form').hidden = false;
     $('leads-box').hidden = false;
+    $('provider-keys-box').hidden = false;
     $('link-box').hidden = false;
     updateLink();
     renderMeta();
@@ -90,6 +96,7 @@ async function load() {
   } catch (err) {
     $('edit-form').hidden = true;
     $('leads-box').hidden = true;
+    $('provider-keys-box').hidden = true;
     $('link-box').hidden = true;
     $('key-form').hidden = false;
     showSupport();
@@ -105,6 +112,84 @@ $('key-form').addEventListener('submit', (e) => {
   load();
 });
 
+function renderProviderHelp() {
+  const chip = $('provider-key-help-chip');
+  const tip = $('provider-key-help-tooltip');
+  const connect = $('provider-openrouter-connect');
+  const selected = $('provider-select')?.value || 'groq';
+  if (!chip || !tip) return;
+  chip.setAttribute('aria-label', `Instructions for ${selected} API keys`);
+  tip.replaceChildren();
+  const line = (before, url, label, after) => {
+    tip.append(document.createTextNode(before));
+    const link = document.createElement('a'); link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = label; tip.append(link);
+    tip.append(document.createTextNode(after));
+  };
+  if (selected === 'groq') {
+    line('Open ', 'https://console.groq.com/', 'Groq Console', ', sign in with your email, go to API Keys, choose Create API Key, then copy or save it (you only see it once!) and paste it here.');
+  } else if (selected === 'requesty') {
+    line('Open ', 'https://requesty.ai/', 'Requesty', ', sign in with email or Google (Google is easiest), go to API Keys, choose Create API Key, then copy or save it (you only see it once!) and paste it here.');
+  } else {
+    tip.append(document.createTextNode('Use Connect OpenRouter for the secure sign-in flow, or create an API key in your OpenRouter account and paste it here.'));
+  }
+  if (connect) connect.hidden = selected !== 'openrouter';
+}
+
+function renderProviderKeys() {
+  const select = $('provider-select');
+  if (select && data?.providers) {
+    select.replaceChildren();
+    for (const provider of data.providers) {
+      const option = document.createElement('option'); option.value = provider.id; option.textContent = `${provider.name} — ${provider.model}`; select.append(option);
+    }
+  }
+  renderProviderHelp();
+  const list = $('provider-key-list');
+  if (!list || !data) return;
+  list.replaceChildren();
+  if (!data.providerKeys?.length) {
+    const p = document.createElement('p'); p.className = 'hint'; p.textContent = t('providerNoKeys'); list.append(p); return;
+  }
+  for (const key of data.providerKeys) {
+    const row = document.createElement('div'); row.className = 'lead-item';
+    const title = document.createElement('strong');
+    const provider = data.providers.find((p) => p.id === key.provider);
+    title.textContent = `${provider?.name || key.provider} · •••• ${key.last4}`;
+    const status = document.createElement('p'); status.className = 'hint';
+    status.textContent = key.status === 'invalid' ? t('providerKeyInvalid') : key.cooldownUntil && new Date(key.cooldownUntil) > new Date() ? t('providerKeyCooldown') : t('providerKeyActive');
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'ghost'; remove.textContent = t('providerRemove');
+    remove.addEventListener('click', async () => {
+      if (!confirm(t('providerRemoveConfirm'))) return;
+      remove.disabled = true;
+      try { const out = await request('DELETE', `/api/agents/${encodeURIComponent(slug)}/keys/${encodeURIComponent(key.id)}`, null, auth()); data.providerKeys = out.keys; renderProviderKeys(); showNotice(t('providerRemoved')); }
+      catch (err) { showError(err.message); remove.disabled = false; }
+    });
+    row.append(title, status, remove); list.append(row);
+  }
+}
+
+$('provider-select').addEventListener('change', renderProviderHelp);
+
+$('provider-openrouter-connect').addEventListener('click', async () => {
+  const btn = $('provider-openrouter-connect');
+  const note = $('provider-key-note');
+  btn.disabled = true; note.textContent = '';
+  try {
+    const out = await request('POST', `/api/agents/${encodeURIComponent(slug)}/openrouter/oauth/start`, {}, auth());
+    location.assign(out.url);
+  } catch (err) { note.textContent = err.message; btn.disabled = false; }
+});
+
+$('provider-key-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); showError(''); $('provider-key-note').textContent = '';
+  const btn = $('provider-key-save'); btn.disabled = true; btn.textContent = t('providerTesting');
+  try {
+    const out = await request('POST', `/api/agents/${encodeURIComponent(slug)}/keys`, { provider: $('provider-select').value, apiKey: $('provider-api-key').value }, auth());
+    $('provider-api-key').value = ''; data.providerKeys = out.keys; renderProviderKeys(); $('provider-key-note').textContent = t('providerSaved');
+  } catch (err) { $('provider-key-note').textContent = err.message; }
+  finally { btn.disabled = false; btn.textContent = t('providerTestSave'); }
+});
+
 $('edit-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   showError(''); showNotice('');
@@ -113,6 +198,7 @@ $('edit-form').addEventListener('submit', async (e) => {
   try {
     const agent = collect();
     agent.status = $('e-status').value;
+    agent.providerDailyCap = Number($('provider-daily-cap').value);
     const out = await api('PUT', { agent, inputs: getInputs($('inputs-box')), lang: getUi() });
     if (hasLogoChange()) await syncLogo(slug, auth());
     await load();
@@ -134,5 +220,8 @@ $('delete').addEventListener('click', async () => {
 });
 
 onUiChange(() => { renderMeta(); updateLink(); showSupport(); });
+const providerResult = new URLSearchParams(location.search).get('provider');
+if (providerResult) history.replaceState(null, '', location.pathname);
+
 applyUi();
 if (token) load(); else { $('key-form').hidden = false; showSupport(); }

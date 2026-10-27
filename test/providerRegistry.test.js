@@ -51,3 +51,19 @@ test('generic provider client surfaces API error messages', async () => {
     /invalid key/
   );
 });
+
+test('provider registry has stable provider IDs and unique definitions', () => {
+  assert.deepEqual(PROVIDERS.map((p) => p.id), ['groq', 'openrouter', 'requesty']);
+  assert.equal(new Set(PROVIDERS.map((p) => p.id)).size, PROVIDERS.length);
+});
+
+test('OpenRouter default model uses the current non-free-suffixed model name', () => {
+  assert.equal(PROVIDERS.find((p) => p.id === 'openrouter').model, 'openai/gpt-oss-120b');
+});
+
+test('configured platform providers omit missing keys and honor overrides', () => {
+  const providers = configuredProviders({ GROQ_API_KEY: 'test-key', GROQ_MODEL: 'custom-model', OPENROUTER_API_KEY: 'router-key' });
+  assert.deepEqual(providers.map((p) => p.id), ['groq', 'openrouter']);
+  assert.equal(providers[0].model, 'custom-model');
+  assert.equal(providers[1].model, 'openai/gpt-oss-120b');
+});

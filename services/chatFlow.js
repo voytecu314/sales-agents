@@ -19,9 +19,9 @@ function buildLlmMessages(systemPrompt, validated) {
   ];
 }
 
-async function respond(res, messages, { linkPolicy = null } = {}) {
+async function respond(res, messages, { linkPolicy = null, llmOptions = {} } = {}) {
   try {
-    const raw = await askChain(messages);
+    const raw = await askChain(messages, llmOptions);
     const html = sanitizeHtml(cleanHtml(raw), { linkPolicy }); // cleanHtml tidies the format, the sanitizer makes it safe
     if (!html) return res.status(502).json({ error: 'The model returned an empty response. Try again.' });
     // `text` is what the client sends back as the assistant side of the history

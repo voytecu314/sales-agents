@@ -33,6 +33,7 @@ const agentSchema = new mongoose.Schema({
   notifyEmail: { type: String, default: '', maxlength: 254 },       // where lead notifications go (never public)
   notifyEmailVerified: { type: Boolean, default: false },
   status: { type: String, enum: ['active', 'paused'], default: 'active' },
+  providerDailyCap: { type: Number, min: 1, max: 10000, default: 100 },
   plan: { type: String, default: 'free' },                  // filled by Stripe later
   editTokenHash: { type: String, required: true, select: false }, // sha256 of the owner's secret key
   editTokenExpiresAt: { type: Date }                              // the key stops working after this date (renewal by the admin)

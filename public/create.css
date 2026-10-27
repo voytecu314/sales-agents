@@ -47,3 +47,9 @@ details.guided > summary { cursor: pointer; padding: 12px 0; color: var(--text);
 .logo-preview { height: 48px; width: auto; max-width: 160px; object-fit: contain; border-radius: 10px; background: color-mix(in srgb, var(--text) 6%, transparent); padding: 4px; }
 .logo-preview[hidden], #r-logo-remove[hidden] { display: none; }
 h2 { font: 700 1.2rem var(--display); margin: 8px 0 0; }
+
+.provider-label-row { display: flex; align-items: center; gap: 8px; }
+.provider-help-chip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; flex: 0 0 18px; border: 1px solid var(--muted); border-radius: 50%; color: var(--text); font: 700 12px/1 system-ui; cursor: help; }
+.provider-help-tooltip { position: absolute; z-index: 30; left: 0; bottom: calc(100% + 10px); display: none; width: min(320px, calc(100vw - 72px)); padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); box-shadow: 0 8px 28px #0003; font: 400 .85rem/1.45 system-ui; white-space: normal; }
+.provider-help-tooltip a { color: var(--text); text-decoration: underline; }
+.provider-help-chip:hover .provider-help-tooltip, .provider-help-chip:focus .provider-help-tooltip, .provider-help-chip:focus-within .provider-help-tooltip { display: block; }

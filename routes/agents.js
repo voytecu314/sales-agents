@@ -4,7 +4,7 @@ const { withDb } = require('../middleware/withDb');
 const { dbLimit, killSwitch } = require('../middleware/limits');
 const { requireOwner } = require('../middleware/requireOwner');
 const { generate, create, config, chat } = require('../controllers/agentsController');
-const { owner, update, remove, verifyEmail } = require('../controllers/ownerController');
+const { owner, update, remove, verifyEmail, providerKeys, addProviderKey, removeProviderKey, startOpenRouterOAuth, finishOpenRouterOAuth } = require('../controllers/ownerController');
 const { lead, report } = require('../controllers/leadController');
 const { getLogo, putLogo, deleteLogo } = require('../controllers/logoController');
 
@@ -20,6 +20,7 @@ router.post('/agents/generate', withDb, killSwitch(), dbLimit({ name: 'generate'
 router.post('/agents', withDb, dbLimit({ name: 'create', windowMs: HOUR, max: num(process.env.CREATE_LIMIT_MAX, 10) }), create);
 
 router.get('/agents/:slug/config', withDb, config);
+router.get('/openrouter/oauth/callback', withDb, finishOpenRouterOAuth);
 router.get('/agents/:slug/logo', withDb, getLogo);
 router.post('/agents/:slug/chat', chatPerIp, chatPerAgent, withDb, killSwitch(), chat);
 router.post('/agents/:slug/lead', withDb, dbLimit({ name: 'lead', windowMs: HOUR, max: 5 }), lead);
@@ -29,6 +30,10 @@ router.get('/agents/:slug/verify-email', withDb, dbLimit({ name: 'verify', windo
 // owner (key in the Authorization header)
 const ownerAuth = [withDb, dbLimit({ name: 'owner', windowMs: 10 * MIN, max: 40 }), requireOwner];
 router.get('/agents/:slug/owner', ...ownerAuth, owner);
+router.get('/agents/:slug/keys', ...ownerAuth, providerKeys);
+router.post('/agents/:slug/keys', ...ownerAuth, addProviderKey);
+router.post('/agents/:slug/openrouter/oauth/start', ...ownerAuth, startOpenRouterOAuth);
+router.delete('/agents/:slug/keys/:keyId', ...ownerAuth, removeProviderKey);
 router.put('/agents/:slug', ...ownerAuth, update);
 router.put('/agents/:slug/logo', ...ownerAuth, putLogo);
 router.delete('/agents/:slug/logo', ...ownerAuth, deleteLogo);
