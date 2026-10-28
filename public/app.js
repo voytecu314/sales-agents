@@ -199,8 +199,34 @@ function lockForm(f, locked) {
 }
 
 /* ---------- sending ---------- */
+function localDateKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function reserveVisitorRequest() {
+  const limit = Number(AGENT?.visitorDailyLimit);
+  if (!Number.isInteger(limit) || limit < 1) return true;
+  try {
+    const key = `sa_visitor_daily_${AGENT.slug}`;
+    const today = localDateKey();
+    let state = JSON.parse(localStorage.getItem(key) || 'null');
+    if (!state || state.date !== today || !Number.isInteger(state.count) || state.count < 0) state = { date: today, count: 0 };
+    if (state.count >= limit) return false;
+    state.count += 1;
+    localStorage.setItem(key, JSON.stringify(state));
+  } catch { /* Storage blocked: do not prevent the conversation. This is intentionally best-effort. */ }
+  return true;
+}
+function showVisitorLimitNotice() {
+  const box = document.createElement('div');
+  box.className = 'callout danger';
+  box.textContent = t('visitorLimitReached');
+  feed.append(box);
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
 async function send(prompt, onFail) {
   if (busy) return;
+  if (!reserveVisitorRequest()) { showVisitorLimitNotice(); return; }
   busy = true;
   button.disabled = true;
 

@@ -53,3 +53,15 @@ h2 { font: 700 1.2rem var(--display); margin: 8px 0 0; }
 .provider-help-tooltip { position: absolute; z-index: 30; left: 0; bottom: calc(100% + 10px); display: none; width: min(320px, calc(100vw - 72px)); padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); box-shadow: 0 8px 28px #0003; font: 400 .85rem/1.45 system-ui; white-space: normal; }
 .provider-help-tooltip a { color: var(--text); text-decoration: underline; }
 .provider-help-chip:hover .provider-help-tooltip, .provider-help-chip:focus .provider-help-tooltip, .provider-help-chip:focus-within .provider-help-tooltip { display: block; }
+
+/* Compact expandable sections on the owner edit page. */
+.edit-main-form { gap: 12px; }
+.edit-section { min-width: 0; border: 1px solid var(--line); border-radius: 14px; padding: 0 16px; }
+.edit-section > summary, .usage-limit-details > summary { cursor: pointer; list-style-position: outside; padding: 15px 0; color: var(--text); font-weight: 650; }
+.edit-section[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.edit-section-body { display: grid; gap: 14px; padding: 0 0 16px; }
+.usage-limit-details { border-top: 1px solid var(--line); padding-top: 2px; }
+.usage-limit-details > summary { color: var(--muted); font-size: .92rem; padding: 12px 0; }
+.usage-limit-details[open] > summary { color: var(--text); }
+.edit-actions { padding-top: 4px; }
+#visitor-daily-limit { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text); font: inherit; }

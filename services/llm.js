@@ -1,7 +1,6 @@
 // OpenAI-compatible client. Owner keys are tried first; platform keys are a capped fallback.
 const { configuredProviders } = require('./providerRegistry');
 const TIMEOUT_MS = Number(process.env.PROVIDER_TIMEOUT_MS) || 60_000;
-const OWNER_DAILY_CAP = () => Number(process.env.OWNER_PROVIDER_DAILY_CAP) || 100;
 const PLATFORM_FALLBACK_PER_AGENT = () => Number(process.env.PLATFORM_FALLBACK_DAILY_CAP) || 10;
 const PLATFORM_FALLBACK_GLOBAL = () => Number(process.env.PLATFORM_FALLBACK_GLOBAL_DAILY_CAP) || 500;
 const dayKey = () => new Date().toISOString().slice(0, 10);
@@ -57,10 +56,6 @@ async function askChain(messages, { slug = null, useOwnerKeys = true } = {}) {
     const { loadUsableKeys } = require('./keyVault');
     const keys = await loadUsableKeys(slug);
     if (keys.length) {
-      const ownerDaily = await hit(dailyKey('owner-provider', slug), 2 * 86_400_000);
-      const agent = await require('../models/Agent').findOne({ slug }).select('providerDailyCap').lean();
-      const cap = Math.max(1, Number(agent?.providerDailyCap) || OWNER_DAILY_CAP());
-      if (ownerDaily > cap) throw Object.assign(new Error('This assistant has reached its daily provider-key limit set by the owner.'), { status: 429 });
       try { return await tryProviders(keys.map((k) => ({ ...k.provider, apiKey: k.apiKey, _id: k._id })), messages, slug, true); }
       catch (err) { console.error(`Owner provider keys exhausted for ${slug}; trying limited platform fallback:`, err.message); }
     }
@@ -77,4 +72,4 @@ async function testProviderKey(provider, apiKey) {
   if (!text) throw new Error('The provider returned an empty response.');
   return true;
 }
-module.exports = { askChain, askProvider, testProviderKey, OWNER_DAILY_CAP };
+module.exports = { askChain, askProvider, testProviderKey };

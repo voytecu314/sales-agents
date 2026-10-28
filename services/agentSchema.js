@@ -179,7 +179,8 @@ function toPublicConfig(agent) {
     logoUrl: agent.hasLogo ? `/api/agents/${agent.slug}/logo?v=${agent.logoVersion || 0}` : null,
     language: agent.language,
     palette: { ...DEFAULT_PALETTE, ...(agent.palette || {}) },
-    locales: agent.locales
+    locales: agent.locales,
+    visitorDailyLimit: Number.isInteger(agent.visitorDailyLimit) && agent.visitorDailyLimit > 0 ? agent.visitorDailyLimit : null
   };
 }
 

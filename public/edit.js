@@ -78,7 +78,7 @@ async function load() {
     fill(data.agent);
     setInputs($('inputs-box'), data.inputs);
     $('e-status').value = data.agent.status;
-    $('provider-daily-cap').value = data.agent.providerDailyCap || 100;
+    $('visitor-daily-limit').value = data.agent.visitorDailyLimit ?? '';
     renderProviderKeys();
     if (providerResult === 'connected') showNotice(t('providerOAuthConnected'));
     else if (providerResult === 'cancelled') showNotice(t('providerOAuthCancelled'));
@@ -118,7 +118,7 @@ function renderProviderHelp() {
   const connect = $('provider-openrouter-connect');
   const selected = $('provider-select')?.value || 'groq';
   if (!chip || !tip) return;
-  chip.setAttribute('aria-label', `Instructions for ${selected} API keys`);
+  chip.setAttribute('aria-label', t('providerApiKey') + ' — ' + (data?.providers?.find((p) => p.id === selected)?.name || selected));
   tip.replaceChildren();
   const line = (before, url, label, after) => {
     tip.append(document.createTextNode(before));
@@ -126,11 +126,11 @@ function renderProviderHelp() {
     tip.append(document.createTextNode(after));
   };
   if (selected === 'groq') {
-    line('Open ', 'https://console.groq.com/', 'Groq Console', ', sign in with your email, go to API Keys, choose Create API Key, then copy or save it (you only see it once!) and paste it here.');
+    line(t('providerHelpGroqPrefix'), 'https://console.groq.com/', 'Groq Console', t('providerHelpGroqSuffix'));
   } else if (selected === 'requesty') {
-    line('Open ', 'https://requesty.ai/', 'Requesty', ', sign in with email or Google (Google is easiest), go to API Keys, choose Create API Key, then copy or save it (you only see it once!) and paste it here.');
+    line(t('providerHelpRequestyPrefix'), 'https://requesty.ai/', 'Requesty', t('providerHelpRequestySuffix'));
   } else {
-    tip.append(document.createTextNode('Use Connect OpenRouter for the secure sign-in flow, or create an API key in your OpenRouter account and paste it here.'));
+    tip.append(document.createTextNode(t('providerHelpOpenRouter')));
   }
   if (connect) connect.hidden = selected !== 'openrouter';
 }
@@ -198,7 +198,8 @@ $('edit-form').addEventListener('submit', async (e) => {
   try {
     const agent = collect();
     agent.status = $('e-status').value;
-    agent.providerDailyCap = Number($('provider-daily-cap').value);
+    const visitorLimit = $('visitor-daily-limit').value.trim();
+    agent.visitorDailyLimit = visitorLimit ? Number(visitorLimit) : null;
     const out = await api('PUT', { agent, inputs: getInputs($('inputs-box')), lang: getUi() });
     if (hasLogoChange()) await syncLogo(slug, auth());
     await load();
@@ -219,7 +220,7 @@ $('delete').addEventListener('click', async () => {
   } catch (err) { showError(err.message); }
 });
 
-onUiChange(() => { renderMeta(); updateLink(); showSupport(); });
+onUiChange(() => { renderMeta(); updateLink(); showSupport(); renderProviderHelp(); });
 const providerResult = new URLSearchParams(location.search).get('provider');
 if (providerResult) history.replaceState(null, '', location.pathname);
 

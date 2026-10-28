@@ -24,7 +24,7 @@ const REGEN_DAILY_CAP = 10; // rewrites of the instructions per agent and day (e
 const editable = (a) => ({
   name: a.name, emoji: a.emoji || '', language: a.language, palette: a.palette, locales: a.locales,
   legalUrl: a.legalUrl || '', legalText: a.legalText || '',
-  notifyEmail: a.notifyEmail || '', notifyEmailVerified: Boolean(a.notifyEmailVerified), status: a.status, providerDailyCap: a.providerDailyCap || 100,
+  notifyEmail: a.notifyEmail || '', notifyEmailVerified: Boolean(a.notifyEmailVerified), status: a.status, visitorDailyLimit: a.visitorDailyLimit ?? null,
   logoUrl: a.hasLogo ? `/api/agents/${a.slug}/logo?v=${a.logoVersion || 0}` : null
 });
 
@@ -93,10 +93,14 @@ async function update(req, res) {
 
     const emailChanged = value.notifyEmail !== (old.notifyEmail || '');
     const set = { ...value, status };
-    if (req.body?.agent?.providerDailyCap !== undefined) {
-      const cap = Number(req.body.agent.providerDailyCap);
-      if (!Number.isInteger(cap) || cap < 1 || cap > 10000) return res.status(400).json({ error: 'Daily provider-key limit must be an integer from 1 to 10000.' });
-      set.providerDailyCap = cap;
+    if (req.body?.agent?.visitorDailyLimit !== undefined) {
+      const rawLimit = req.body.agent.visitorDailyLimit;
+      if (rawLimit === null || rawLimit === '' || rawLimit === 0) set.visitorDailyLimit = null;
+      else {
+        const limit = Number(rawLimit);
+        if (!Number.isInteger(limit) || limit < 1 || limit > 10000) return res.status(400).json({ error: 'Visitor daily limit must be blank or an integer from 1 to 10000.' });
+        set.visitorDailyLimit = limit;
+      }
     }
     if (inputsChanged) {
       set.systemPrompt = systemPrompt;
