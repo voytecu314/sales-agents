@@ -30,6 +30,20 @@ function brandMark(config) {
 // `site` (optional) turns the shared page into a special one (the Urban Web home page): see services/urbanWeb.js#siteOptions.
 const { impressumUrl } = require('./legalDocs');
 
+
+const PAUSED_COPY = {
+  en: { title: 'This assistant is currently disabled', body: 'The owner has temporarily disabled this assistant. Please check back later.' },
+  de: { title: 'Dieser Assistent ist derzeit deaktiviert', body: 'Der Betreiber hat diesen Assistenten vorübergehend deaktiviert. Bitte versuchen Sie es später erneut.' },
+  pl: { title: 'Ten asystent jest obecnie wyłączony', body: 'Właściciel tymczasowo wyłączył tego asystenta. Spróbuj ponownie później.' }
+};
+
+function renderPausedAgentPage(agent, lang = 'en') {
+  if (!LANGS.includes(lang)) lang = 'en';
+  const copy = PAUSED_COPY[lang];
+  const name = esc(agent?.name || 'Assistant');
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${name}</title><link rel="stylesheet" href="/style.css"><style>body{display:grid;place-items:center;min-height:100vh}.paused-card{width:min(560px,calc(100% - 40px));padding:28px;border:1px solid var(--line);border-radius:18px;background:var(--panel);text-align:center}.paused-card h1{font-size:1.35rem}.paused-card p{color:var(--muted);line-height:1.6}</style></head><body><main class="paused-card"><h1>${name}</h1><p role="status">${copy.title}</p><p>${copy.body}</p></main></body></html>`;
+}
+
 function renderAgentPage(agent, { lang = 'en', baseUrl = '', site = {} } = {}) {
   if (!LANGS.includes(lang)) lang = 'en';
   const config = toPublicConfig(agent);
@@ -70,4 +84,4 @@ function renderAgentPage(agent, { lang = 'en', baseUrl = '', site = {} } = {}) {
   return TEMPLATE.replace(/%%([A-Z_]+)%%/g, (m, k) => (k in values ? values[k] : m));
 }
 
-module.exports = { renderAgentPage, themeCss, jsonForScript, esc };
+module.exports = { renderAgentPage, renderPausedAgentPage, themeCss, jsonForScript, esc };

@@ -32,7 +32,8 @@
     <!-- step 2: review and edit -->
     <form id="step-review" class="panel-form" hidden autocomplete="off">
             %%REVIEW_FORM%%
-      <label class="terms-row"><input type="checkbox" id="r-terms"><span><span data-i18n="termsAccept">I have read and accept the</span> <a id="r-terms-link" href="/terms" target="_blank" rel="noopener" data-i18n="termsLink">Terms of use</a><span data-i18n="termsAccept2">, including adding my company's legal notice (Impressum) where the law requires it.</span></span></label>
+      <label class="terms-row" id="terms-row"><input type="checkbox" id="r-terms" aria-describedby="terms-error"><span><span data-i18n="termsAccept">I have read and accept the</span> <a id="r-terms-link" href="/terms" target="_blank" rel="noopener" data-i18n="termsLink">Terms of use</a><span data-i18n="termsAccept2">, including adding my company's legal notice (Impressum) where the law requires it.</span></span></label>
+      <p id="terms-error" class="terms-error" role="alert" hidden></p>
       <div class="actions-row">
         <button class="ghost" type="button" id="back" data-i18n="back">Back</button>
         <button class="btn" type="submit" id="publish" data-i18n="publish">Publish my agent</button>
@@ -48,6 +49,12 @@
       <p class="hint" id="d-expiry"></p>
       <p class="hint" id="d-logo-note" hidden></p>
       <p class="hint" id="d-color-note" hidden></p>
+      <div class="actions-row result-actions">
+        <button class="ghost" type="button" id="copy-url" data-i18n="copyUrl">Copy link</button>
+        <button class="ghost" type="button" id="copy-key" data-i18n="copyKey">Copy key</button>
+        <button class="ghost" type="button" id="copy-edit" data-i18n="copyEdit">Copy edit link</button>
+        <a class="ghost" id="d-edit" href="#" data-i18n="editLink">Edit page</a>
+      </div>
       <section class="provider-setup" aria-labelledby="provider-setup-title">
         <h3 id="provider-setup-title" data-i18n="providerSetupTitle">Recommended next step: connect an AI provider</h3>
         <p data-i18n="providerSetupBody">Your agent can use a small, limited platform allowance before you add a provider key. Adding your own key connects the agent to your provider account and its available quota or credits.</p>
@@ -71,11 +78,7 @@
           <a href="tel:+12025550147" data-i18n="supportPhone">Call us</a>
         </div>
       </section>
-      <div class="actions-row">
-        <button class="ghost" type="button" id="copy-url" data-i18n="copyUrl">Copy link</button>
-        <button class="ghost" type="button" id="copy-key" data-i18n="copyKey">Copy key</button>
-        <button class="ghost" type="button" id="copy-edit" data-i18n="copyEdit">Copy edit link</button>
-        <a class="ghost" id="d-edit" href="#" data-i18n="editLink">Edit page</a>
+      <div class="actions-row open-agent-action">
         <a class="btn" id="d-open" href="#" data-i18n="open">Open agent</a>
       </div>
     </section>

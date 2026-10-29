@@ -2,7 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { renderAgentPage } = require('../services/renderPage');
+const { renderAgentPage, renderPausedAgentPage } = require('../services/renderPage');
 const { URBAN_WEB, siteOptions } = require('../services/urbanWeb');
 const { parseLead } = require('../services/leadInput');
 const { createDemoLeadHandler, DEMO_SLUG } = require('../services/demoLead');
@@ -35,6 +35,16 @@ test('Urban Web page: own endpoints and all three languages in the embedded conf
     assert.ok(cfg.locales[l].quickReplies.every((q) => q.label.length <= 40 && q.send.length <= 200));
   }
   assert.ok(!('systemPrompt' in cfg));
+});
+
+test('paused agents get an informational page without any chat controls or chat scripts', () => {
+  for (const [lang, title] of [['en', 'This assistant is currently disabled'], ['de', 'Dieser Assistent ist derzeit deaktiviert'], ['pl', 'Ten asystent jest obecnie wyłączony']]) {
+    const html = renderPausedAgentPage({ name: 'Acme <Company>' }, lang);
+    assert.match(html, new RegExp(title));
+    assert.match(html, /Acme &lt;Company&gt;/);
+    assert.ok(!html.includes('id=\"composer\"') && !html.includes('id=\"prompt\"') && !html.includes('/app.js'));
+    assert.ok(!html.includes('agent-config'));
+  }
 });
 
 test('stored agents keep their page: report button, endpoints from the slug, no logo block', () => {
@@ -461,4 +471,35 @@ test('support contacts and direct OpenRouter onboarding are present on create co
   for (const key of ['supportTitle', 'supportBody', 'supportEmail', 'supportWhatsApp', 'supportPhone', 'providerSetupOpenRouterCta']) {
     assert.equal((form.match(new RegExp(`${key}:`, 'g')) || []).length, 3, `${key} should be translated in en/de/pl`);
   }
+});
+
+test('create completion keeps copy/edit actions before provider setup and Open agent after support', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'views', 'create.html'), 'utf8');
+  const pos = (id) => html.indexOf(`id="${id}"`);
+  assert.ok(pos('copy-url') < pos('provider-setup-title'));
+  assert.ok(pos('copy-key') < pos('provider-setup-title'));
+  assert.ok(pos('copy-edit') < pos('provider-setup-title'));
+  assert.ok(pos('d-edit') < pos('provider-setup-title'));
+  assert.ok(pos('provider-setup-title') < pos('support-title'));
+  assert.ok(pos('support-title') < pos('d-open'));
+  const css = fs.readFileSync(path.join(__dirname, '..', 'public', 'create.css'), 'utf8');
+  assert.match(css, /#d-key[^\n]*border: 2px solid var\(--violet\)/);
+  assert.match(css, /\.terms-row\.invalid/);
+  const js = fs.readFileSync(path.join(__dirname, '..', 'public', 'create.js'), 'utf8');
+  assert.match(js, /termsCheckbox\.addEventListener\('change'/);
+  assert.match(js, /setTermsInvalid\(false\)/);
+});
+
+test('edit page route guards slugs and looks up an existing agent before serving the form', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const root = path.join(__dirname, '..');
+  const routes = fs.readFileSync(path.join(root, 'routes', 'pages.js'), 'utf8');
+  const controller = fs.readFileSync(path.join(root, 'controllers', 'pagesController.js'), 'utf8');
+  assert.match(routes, /router\.get\('\/edit\/:slug', ownerPageHeaders, withDb, editPage\)/);
+  assert.match(controller, /if \(!isValidSlug\(slug\)\) return res\.status\(404\)/);
+  assert.match(controller, /const agent = await getAgent\(slug\)/);
+  assert.match(controller, /if \(!agent\) return res\.status\(404\)/);
 });

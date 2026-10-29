@@ -9,7 +9,7 @@ router.get('/', homePage); // Urban Web assistant
 router.get('/privacy', privacyPage);
 router.get('/terms', termsPage);
 router.get('/create', createPage);
-router.get('/edit/:slug', ownerPageHeaders, editPage);
+router.get('/edit/:slug', ownerPageHeaders, withDb, editPage);
 router.get('/a/:slug', withDb, agentPage);
 router.get('/a/:slug/legal', withDb, agentLegalPage);
 

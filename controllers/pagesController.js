@@ -3,7 +3,7 @@ const path = require('path');
 const { LANGS } = require('../services/i18n');
 const { isValidSlug } = require('../services/slug');
 const { getAgent } = require('../services/agentCache');
-const { renderAgentPage, esc } = require('../services/renderPage');
+const { renderAgentPage, renderPausedAgentPage, esc } = require('../services/renderPage');
 const { URBAN_WEB, siteOptions } = require('../services/urbanWeb');
 const { renderPrivacyPage } = require('../services/privacyText');
 const { renderTermsPage } = require('../services/termsText');
@@ -30,9 +30,18 @@ function createPage(req, res) {
 }
 
 // GET /edit/:slug : owner page. The owner key is in the URL fragment (#...), which is never sent to the server.
-function editPage(req, res) {
-  const support = esc(process.env.SUPPORT_EMAIL || '');
-  res.type('html').send(EDIT_HTML.replace(/%%SUPPORT_EMAIL%%/g, support).replace('%%LEGAL_FOOT%%', legalFoot()));
+async function editPage(req, res) {
+  const slug = String(req.params.slug || '');
+  if (!isValidSlug(slug)) return res.status(404).type('text').send('Assistant not found.');
+  try {
+    const agent = await getAgent(slug);
+    if (!agent) return res.status(404).type('text').send('Assistant not found.');
+    const support = esc(process.env.SUPPORT_EMAIL || '');
+    return res.type('html').send(EDIT_HTML.replace(/%%SUPPORT_EMAIL%%/g, support).replace('%%LEGAL_FOOT%%', legalFoot()));
+  } catch (err) {
+    console.error('Edit page lookup failed:', err.message);
+    return res.status(503).type('text').send('Service temporarily unavailable. Try again in a moment.');
+  }
 }
 
 // GET /a/:slug : same shell for everyone, filled with this company's branding
@@ -52,6 +61,7 @@ async function agentPage(req, res) {
   const q = req.query.lang;
   const lang = LANGS.includes(q) ? q : (req.acceptsLanguages(...LANGS) || 'en'); // the browser refines this on load
   res.set('Vary', 'Accept-Language');
+  if (agent.status === 'paused') return res.type('html').send(renderPausedAgentPage(agent, lang));
   res.type('html').send(renderAgentPage(agent, { lang, baseUrl: baseUrl(req) }));
 }
 

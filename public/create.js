@@ -31,10 +31,27 @@ $('step-describe').addEventListener('submit', async (e) => {
 $('r-notify').addEventListener('input', () => { $('r-notify-suggest').hidden = true; });
 $('back').addEventListener('click', () => { showError(''); show('step-describe'); });
 
+const termsCheckbox = $('r-terms');
+const termsRow = $('terms-row');
+const termsError = $('terms-error');
+function setTermsInvalid(invalid) {
+  termsRow.classList.toggle('invalid', invalid);
+  termsCheckbox.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+  termsError.hidden = !invalid;
+  if (invalid) termsError.textContent = t('termsRequired');
+}
+termsCheckbox.addEventListener('change', () => { if (termsCheckbox.checked) setTermsInvalid(false); });
+
 $('step-review').addEventListener('submit', async (e) => {
   e.preventDefault();
   showError('');
-  if (!$('r-terms').checked) { showError(t('termsRequired')); return; }
+  if (!termsCheckbox.checked) {
+    setTermsInvalid(true);
+    termsCheckbox.focus({ preventScroll: true });
+    termsRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  setTermsInvalid(false);
   const btn = $('publish');
   btn.disabled = true; btn.textContent = t('publishing');
   try {
