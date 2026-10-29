@@ -4,6 +4,10 @@ const { t, getUi, $, fill, collect, applyUi, request, showError, showNotice, onU
 
 const slug = location.pathname.split('/')[2] || '';
 const STORE_KEY = 'sa_owner_' + slug;
+const query = new URLSearchParams(location.search);
+const providerResult = query.get('provider');
+const autoConnectOpenRouter = query.get('connectOpenRouter') === '1';
+let autoConnectStarted = false;
 let token = '';
 let data = null;
 
@@ -93,6 +97,12 @@ async function load() {
     updateLink();
     renderMeta();
     renderLeads();
+    if (autoConnectOpenRouter && !autoConnectStarted) {
+      autoConnectStarted = true;
+      const providerSelect = $('provider-select');
+      if (providerSelect) { providerSelect.value = 'openrouter'; renderProviderHelp(); }
+      $('provider-openrouter-connect').click();
+    }
   } catch (err) {
     $('edit-form').hidden = true;
     $('leads-box').hidden = true;
@@ -221,8 +231,7 @@ $('delete').addEventListener('click', async () => {
 });
 
 onUiChange(() => { renderMeta(); updateLink(); showSupport(); renderProviderHelp(); });
-const providerResult = new URLSearchParams(location.search).get('provider');
-if (providerResult) history.replaceState(null, '', location.pathname);
+if (providerResult || autoConnectOpenRouter) history.replaceState(null, '', location.pathname);
 
 applyUi();
 if (token) load(); else { $('key-form').hidden = false; showSupport(); }

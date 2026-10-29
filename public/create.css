@@ -72,3 +72,9 @@ h2 { font: 700 1.2rem var(--display); margin: 8px 0 0; }
 .provider-setup p { margin: 0; color: var(--muted); line-height: 1.5; }
 .provider-setup ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; color: var(--text); }
 .provider-setup-links a { color: var(--text); }
+
+
+.support-box { display: grid; gap: 10px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); margin-top: 18px; }
+.support-box h3 { margin: 0; font: 800 1.12rem var(--display); color: var(--text); }
+.support-box p { margin: 0; color: var(--muted); line-height: 1.5; }
+.support-box .actions-row a { color: var(--text); }

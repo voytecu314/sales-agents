@@ -438,3 +438,27 @@ test('create completion includes provider-key onboarding in all supported UI lan
   assert.ok(html.includes('https://www.requesty.ai/'));
   assert.ok(html.includes('https://openrouter.ai/'));
 });
+
+test('support contacts and direct OpenRouter onboarding are present on create completion and edit pages', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const read = (name) => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+  const create = read('views/create.html');
+  const edit = read('views/edit.html');
+  const createJs = read('public/create.js');
+  const editJs = read('public/edit.js');
+  for (const html of [create, edit]) {
+    assert.ok(html.includes('mailto:support@example.com'));
+    assert.ok(html.includes('https://wa.me/12025550147'));
+    assert.ok(html.includes('tel:+12025550147'));
+    for (const key of ['supportTitle', 'supportBody', 'supportEmail', 'supportWhatsApp', 'supportPhone']) assert.ok(html.includes(`data-i18n="${key}"`));
+  }
+  assert.ok(create.includes('id="d-openrouter-connect"'));
+  assert.ok(createJs.includes("connectUrl.searchParams.set('connectOpenRouter', '1')"));
+  assert.ok(editJs.includes("query.get('connectOpenRouter') === '1'"));
+  assert.ok(editJs.includes("providerSelect.value = 'openrouter'"));
+  const form = read('public/agent-form.js');
+  for (const key of ['supportTitle', 'supportBody', 'supportEmail', 'supportWhatsApp', 'supportPhone', 'providerSetupOpenRouterCta']) {
+    assert.equal((form.match(new RegExp(`${key}:`, 'g')) || []).length, 3, `${key} should be translated in en/de/pl`);
+  }
+});

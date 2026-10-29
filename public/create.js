@@ -53,6 +53,9 @@ $('step-review').addEventListener('submit', async (e) => {
     $('d-open').href = out.url;
     $('d-edit').href = out.editUrl;
     $('d-provider-setup').href = out.editUrl;
+    const connectUrl = new URL(out.editUrl, location.origin);
+    connectUrl.searchParams.set('connectOpenRouter', '1');
+    $('d-openrouter-connect').href = connectUrl.toString();
     $('d-key').value = out.editToken;
     show('step-done');
   } catch (err) {
