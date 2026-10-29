@@ -8,7 +8,11 @@ const REVEAL = '.hero, .bubble, .card, .price-card, .stat, .callout, .step, .pro
 // The browser owns the conversation: it keeps the history and sends it with every request.
 // The server keeps nothing. Assistant turns are stored as the compact text the server returns.
 const MAX_HISTORY = 20;
-let history = [];   // [{ role: 'user' | 'assistant', content: string }]
+let history = [];   // Compact context sent to the model (last MAX_HISTORY messages).
+let transcript = []; // Full local transcript; assistant content is stored as plain text, never trusted HTML.
+let conversationStorageKey = null;
+let warningShownInSession = false;
+let conversationChoicePending = false;
 let epoch = 0;      // bumped on reset, so a reply that arrives after "new conversation" is not stored
 let busy = false;
 
@@ -22,6 +26,10 @@ const AGENT = cfgEl ? JSON.parse(cfgEl.textContent) : null;
 const CHAT_URL = AGENT ? (AGENT.chatUrl || `/api/agents/${encodeURIComponent(AGENT.slug)}/chat`) : '/api/chat';
 const LEAD_URL = AGENT ? (AGENT.leadUrl || `/api/agents/${encodeURIComponent(AGENT.slug)}/lead`) : null;
 let lang = AGENT ? pickLang() : null;
+
+// A conversation is scoped to this agent and browser profile. Daily usage lives in a separate key,
+// so starting a new conversation never grants a fresh daily allowance.
+if (AGENT?.slug) conversationStorageKey = `sa_conversation_${AGENT.slug}`;
 
 // Language: ?lang=de  >  the visitor's earlier choice  >  browser language  >  English
 function pickLang() {
@@ -37,6 +45,9 @@ function pickLang() {
 
 const t = (key) => (AGENT ? (AGENT.strings[lang]?.[key] ?? AGENT.strings.en[key]) : 'Coś poszło nie tak.');
 
+// Restore only after translations are available, because returning visitors first see a localized choice.
+if (AGENT?.slug) restoreSavedConversation();
+
 function applyLang() {
   const loc = AGENT.locales[lang] || AGENT.locales.en;
   document.documentElement.lang = lang;
@@ -46,6 +57,8 @@ function applyLang() {
   input.setAttribute('aria-label', t('composerLabel'));
   button.textContent = t('send');
   document.getElementById('reset').textContent = t('newChat');
+  const clearHistory = document.getElementById('clear-history');
+  if (clearHistory) clearHistory.textContent = t('clearHistory');
   document.getElementById('lang').setAttribute('aria-label', t('langLabel'));
   document.getElementById('foot-ai').textContent = t('aiLabel');
   const pv = document.getElementById('privacy'); // footer link follows the language
@@ -57,7 +70,8 @@ function applyLang() {
   if (rb) rb.textContent = t(rb.dataset.sent ? 'reported' : 'report');
   document.getElementById('lang').value = lang;
   // swap the welcome message only while the conversation has not started
-  if (!history.length && !feed.querySelector('.you')) { feed.innerHTML = ''; showWelcome(); }
+  if (conversationChoicePending) showConversationChoice();
+  else if (!history.length && !feed.querySelector('.you')) { feed.innerHTML = ''; showWelcome(); }
 }
 
 if (AGENT) {
@@ -99,11 +113,127 @@ input.addEventListener('input', autosize);
 function autosize() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 180) + 'px'; }
 
 document.getElementById('reset').addEventListener('click', () => {
+  if (transcript.length && !window.confirm(t('newChatConfirm'))) return;
+  startNewConversation();
+});
+document.getElementById('clear-history')?.addEventListener('click', () => {
+  if (!transcript.length) return;
+  if (!window.confirm(t('clearHistoryConfirm'))) return;
+  startNewConversation();
+});
+
+function startNewConversation() {
+  if (busy) return;
+  conversationChoicePending = false;
+  setConversationControlsVisible(true);
   history = [];
+  transcript = [];
+  pendingNote = '';
   epoch++;
+  if (conversationStorageKey) {
+    try { localStorage.removeItem(conversationStorageKey); } catch { /* storage blocked */ }
+  }
   feed.innerHTML = '';
   showWelcome();
-});
+}
+
+function restoreSavedConversation() {
+  if (!conversationStorageKey) return;
+  try {
+    const saved = JSON.parse(localStorage.getItem(conversationStorageKey) || '[]');
+    if (!Array.isArray(saved)) return;
+    transcript = saved.filter((item) => item && ['user', 'assistant', 'notice'].includes(item.role)
+      && typeof item.content === 'string').map((item) => ({ role: item.role, content: item.content }));
+    history = transcript.filter((item) => item.role === 'user' || item.role === 'assistant').slice(-MAX_HISTORY);
+    if (transcript.length) {
+      conversationChoicePending = true;
+      showConversationChoice();
+    }
+  } catch { transcript = []; history = []; }
+}
+
+function setConversationControlsVisible(visible) {
+  const composerEl = document.getElementById('composer');
+  const resetEl = document.getElementById('reset');
+  const clearEl = document.getElementById('clear-history');
+  if (composerEl) composerEl.hidden = !visible;
+  if (resetEl) resetEl.hidden = !visible;
+  if (clearEl) clearEl.hidden = !visible;
+}
+
+function showConversationChoice() {
+  conversationChoicePending = true;
+  setConversationControlsVisible(false);
+  feed.innerHTML = '';
+  const panel = document.createElement('section');
+  panel.className = 'conversation-choice';
+  const title = document.createElement('h2');
+  title.textContent = t('resumeTitle');
+  const text = document.createElement('p');
+  text.textContent = t('resumeText');
+  const actions = document.createElement('div');
+  actions.className = 'conversation-choice-actions';
+  const resume = document.createElement('button');
+  resume.type = 'button';
+  resume.className = 'btn';
+  resume.textContent = t('continueConversation');
+  resume.addEventListener('click', () => {
+    conversationChoicePending = false;
+    setConversationControlsVisible(true);
+    renderSavedTranscript();
+    input.focus({ preventScroll: true });
+  });
+  const fresh = document.createElement('button');
+  fresh.type = 'button';
+  fresh.className = 'ghost';
+  fresh.textContent = t('startFresh');
+  fresh.addEventListener('click', () => startNewConversation());
+  actions.append(resume, fresh);
+  panel.append(title, text, actions);
+  feed.append(panel);
+}
+
+function saveTranscript() {
+  if (!conversationStorageKey) return;
+  try { localStorage.setItem(conversationStorageKey, JSON.stringify(transcript)); }
+  catch { /* Best effort: keep the live conversation working if browser storage is full/blocked. */ }
+}
+
+// Stored assistant replies are plain text. Never inject HTML read back from localStorage.
+function renderSavedTranscript() {
+  if (!transcript.length) return;
+  feed.innerHTML = '';
+  for (const item of transcript) {
+    if (item.role === 'notice') {
+      const notice = document.createElement('div');
+      notice.className = 'callout';
+      notice.textContent = item.content;
+      feed.append(notice);
+      continue;
+    }
+    const turn = document.createElement('article');
+    turn.className = 'turn';
+    if (item.role === 'user') {
+      const you = document.createElement('p');
+      you.className = 'you';
+      you.textContent = item.content;
+      turn.append(you);
+    } else {
+      const gen = document.createElement('div');
+      gen.className = 'gen';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      const p = document.createElement('p');
+      p.textContent = item.content;
+      bubble.append(p);
+      gen.append(bubble);
+      turn.append(gen);
+    }
+    feed.append(turn);
+  }
+  feed.lastElementChild?.scrollIntoView({ block: 'end' });
+}
+
 
 /* ---------- interactive elements inside AI replies (event delegation) ---------- */
 // 1) forms the AI generated: radios, checkboxes, selects, text fields, sliders
@@ -205,17 +335,41 @@ function localDateKey() {
 }
 function reserveVisitorRequest() {
   const limit = Number(AGENT?.visitorDailyLimit);
-  if (!Number.isInteger(limit) || limit < 1) return true;
+  if (!Number.isInteger(limit) || limit < 1) return { allowed: true, limited: false };
   try {
     const key = `sa_visitor_daily_${AGENT.slug}`;
     const today = localDateKey();
     let state = JSON.parse(localStorage.getItem(key) || 'null');
     if (!state || state.date !== today || !Number.isInteger(state.count) || state.count < 0) state = { date: today, count: 0 };
-    if (state.count >= limit) return false;
+    if (state.count >= limit) return { allowed: false, limited: true, count: state.count, limit, date: today };
     state.count += 1;
     localStorage.setItem(key, JSON.stringify(state));
-  } catch { /* Storage blocked: do not prevent the conversation. This is intentionally best-effort. */ }
-  return true;
+    return { allowed: true, limited: true, count: state.count, limit, date: today };
+  } catch {
+    // Storage blocked: do not prevent the conversation. This is intentionally best-effort.
+    return { allowed: true, limited: false };
+  }
+}
+function showVisitorLimitWarning(reservation) {
+  if (!reservation?.limited) return;
+  const threshold = Math.max(1, Math.min(Math.ceil(reservation.limit * 0.8), reservation.limit - 2));
+  if (reservation.count < threshold) return;
+  const key = `sa_visitor_warning_${AGENT.slug}`;
+  try {
+    if (localStorage.getItem(key) === reservation.date) return;
+    localStorage.setItem(key, reservation.date);
+  } catch {
+    if (warningShownInSession) return;
+  }
+  warningShownInSession = true;
+  const message = t('visitorLimitWarning');
+  const box = document.createElement('div');
+  box.className = 'callout';
+  box.textContent = message;
+  feed.append(box);
+  transcript.push({ role: 'notice', content: message });
+  saveTranscript();
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 function showVisitorLimitNotice() {
   const box = document.createElement('div');
@@ -226,9 +380,13 @@ function showVisitorLimitNotice() {
 }
 async function send(prompt, onFail) {
   if (busy) return;
-  if (!reserveVisitorRequest()) { showVisitorLimitNotice(); return; }
+  const reservation = reserveVisitorRequest();
+  if (!reservation.allowed) { showVisitorLimitNotice(); return; }
   busy = true;
   button.disabled = true;
+  document.getElementById('reset').disabled = true;
+  const clearHistoryButton = document.getElementById('clear-history');
+  if (clearHistoryButton) clearHistoryButton.disabled = true;
 
   const turn = document.createElement('article');
   turn.className = 'turn';
@@ -249,15 +407,24 @@ async function send(prompt, onFail) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
 
+    // A reset while the request was in flight must not append its stale response to the new conversation.
+    if (myEpoch !== epoch) return;
+
     // remember the exchange only after it succeeded, so a failed request leaves the history untouched
-    if (myEpoch === epoch) {
-      history.push({ role: 'user', content }, { role: 'assistant', content: data.text || '(visual reply)' });
+    {
+      const assistantText = data.text || '(visual reply)';
+      history.push({ role: 'user', content }, { role: 'assistant', content: assistantText });
       pendingNote = '';
       history = history.slice(-MAX_HISTORY);
+      if (AGENT?.slug) {
+        transcript.push({ role: 'user', content: prompt }, { role: 'assistant', content: assistantText });
+        saveTranscript();
+      }
     }
 
     gen.innerHTML = data.html; // AI-generated HTML goes in here
     enhance(gen);
+    if (myEpoch === epoch) showVisitorLimitWarning(reservation);
   } catch (err) {
     gen.innerHTML = '';
     const box = document.createElement('div');
@@ -271,6 +438,9 @@ async function send(prompt, onFail) {
   } finally {
     busy = false;
     button.disabled = false;
+    document.getElementById('reset').disabled = false;
+    const clearHistoryButton = document.getElementById('clear-history');
+    if (clearHistoryButton) clearHistoryButton.disabled = false;
     input.focus({ preventScroll: true });
   }
 }

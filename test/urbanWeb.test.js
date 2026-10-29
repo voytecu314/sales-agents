@@ -415,3 +415,26 @@ test('forms: the ids used by the scripts exist in the views', () => {
   assert.ok(v('create.html').includes('id="r-terms"') && v('create.html').includes('id="r-terms-link"'));
   for (const f of ['create.html', 'edit.html']) assert.ok(v(f).includes('%%LEGAL_FOOT%%'), f);
 });
+
+test('returning visitor choice is translated in all supported languages', () => {
+  const { STRINGS } = require('../services/i18n');
+  for (const lang of ['en', 'de', 'pl']) {
+    assert.ok(STRINGS[lang].continueConversation.length > 0, `${lang} continue label`);
+    assert.ok(STRINGS[lang].startFresh.length > 0, `${lang} new conversation label`);
+    assert.ok(STRINGS[lang].resumeText.length > 0, `${lang} resume explanation`);
+  }
+});
+
+test('create completion includes provider-key onboarding in all supported UI languages', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const form = fs.readFileSync(path.join(__dirname, '..', 'public', 'agent-form.js'), 'utf8');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'views', 'create.html'), 'utf8');
+  for (const key of ['providerSetupTitle', 'providerSetupBody', 'providerSetupStep1', 'providerSetupStep2', 'providerSetupStep3', 'providerSetupCta']) {
+    assert.equal((form.match(new RegExp(`${key}:`, 'g')) || []).length, 3, `${key} should be translated in en/de/pl`);
+    assert.ok(html.includes(`data-i18n="${key}"`), `${key} should be used by create.html`);
+  }
+  assert.ok(html.includes('https://console.groq.com/'));
+  assert.ok(html.includes('https://www.requesty.ai/'));
+  assert.ok(html.includes('https://openrouter.ai/'));
+});

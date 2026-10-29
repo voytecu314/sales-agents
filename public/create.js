@@ -52,6 +52,7 @@ $('step-review').addEventListener('submit', async (e) => {
     $('d-url').href = out.url;
     $('d-open').href = out.url;
     $('d-edit').href = out.editUrl;
+    $('d-provider-setup').href = out.editUrl;
     $('d-key').value = out.editToken;
     show('step-done');
   } catch (err) {

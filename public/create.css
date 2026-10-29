@@ -65,3 +65,10 @@ h2 { font: 700 1.2rem var(--display); margin: 8px 0 0; }
 .usage-limit-details[open] > summary { color: var(--text); }
 .edit-actions { padding-top: 4px; }
 #visitor-daily-limit { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text); font: inherit; }
+
+
+.provider-setup { display: grid; gap: 10px; padding: 18px; border: 1px solid var(--violet); border-radius: 14px; background: color-mix(in srgb, var(--violet) 7%, var(--panel)); }
+.provider-setup h3 { margin: 0; font: 800 1.12rem var(--display); color: var(--text); }
+.provider-setup p { margin: 0; color: var(--muted); line-height: 1.5; }
+.provider-setup ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; color: var(--text); }
+.provider-setup-links a { color: var(--text); }
